@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Demo Grants -->
+        <record id="demo_grant_1" model="ngo.grant">
+            <field name="grant_number">GRANT-00001</field>
+            <field name="grant_name">Community Health Initiative</field>
+            <field name="short_name">CHI-2024</field>
+            <field name="description">Community health improvement project focusing on maternal and child health.</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="approved_amount">500000</field>
+            <field name="agreement_date" eval="(DateTime.now() - relativedelta(months=12)).strftime('%Y-%m-%d')"/>
+            <field name="start_date" eval="(DateTime.now() - relativedelta(months=11)).strftime('%Y-%m-%d')"/>
+            <field name="end_date" eval="(DateTime.now() + relativedelta(months=13)).strftime('%Y-%m-%d')"/>
+            <field name="state">active</field>
+            <field name="grant_stage">implementation</field>
+            <field name="active" eval="True"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <record id="demo_grant_2" model="ngo.grant">
+            <field name="grant_number">GRANT-00002</field>
+            <field name="grant_name">Agricultural Development Program</field>
+            <field name="short_name">ADP-2024</field>
+            <field name="description">Agricultural development program for smallholder farmers.</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="approved_amount">750000</field>
+            <field name="agreement_date" eval="(DateTime.now() - relativedelta(months=8)).strftime('%Y-%m-%d')"/>
+            <field name="start_date" eval="(DateTime.now() - relativedelta(months=7)).strftime('%Y-%m-%d')"/>
+            <field name="end_date" eval="(DateTime.now() + relativedelta(months=17)).strftime('%Y-%m-%d')"/>
+            <field name="state">active</field>
+            <field name="grant_stage">implementation</field>
+            <field name="active" eval="True"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- Demo Donor Lines -->
+        <record id="demo_donor_line_1" model="ngo.grant.donor.line">
+            <field name="grant_id" ref="demo_grant_1"/>
+            <field name="donor_id" ref="demo_donor_1"/>
+            <field name="contribution_amount">500000</field>
+            <field name="contribution_percentage">100</field>
+            <field name="lead_donor" eval="True"/>
+            <field name="reporting_responsibility">primary</field>
+            <field name="state">active</field>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <record id="demo_donor_line_2" model="ngo.grant.donor.line">
+            <field name="grant_id" ref="demo_grant_2"/>
+            <field name="donor_id" ref="demo_donor_2"/>
+            <field name="contribution_amount">750000</field>
+            <field name="contribution_percentage">100</field>
+            <field name="lead_donor" eval="True"/>
+            <field name="reporting_responsibility">primary</field>
+            <field name="state">active</field>
+            <field name="active" eval="True"/>
+        </record>
+        
+    </data>
+</odoo>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Income Statement Report Action -->
+    <record id="action_grant_income_statement" model="ir.actions.report">
+        <field name="name">Grant Income Statement</field>
+        <field name="model">ngo.grant</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ngo_grant.grant_income_statement_template</field>
+        <field name="report_file">ngo_grant.grant_income_statement_template</field>
+        <field name="binding_model_id" ref="model_ngo_grant"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Balance Sheet Report Action -->
+    <record id="action_grant_balance_sheet" model="ir.actions.report">
+        <field name="name">Grant Balance Sheet</field>
+        <field name="model">ngo.grant</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ngo_grant.grant_balance_sheet_template</field>
+        <field name="report_file">ngo_grant.grant_balance_sheet_template</field>
+        <field name="binding_model_id" ref="model_ngo_grant"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Cash Flow Report Action -->
+    <record id="action_grant_cash_flow" model="ir.actions.report">
+        <field name="name">Grant Cash Flow Statement</field>
+        <field name="model">ngo.grant</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ngo_grant.grant_cash_flow_template</field>
+        <field name="report_file">ngo_grant.grant_cash_flow_template</field>
+        <field name="binding_model_id" ref="model_ngo_grant"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Fund Analysis Report Action -->
+    <record id="action_grant_fund_analysis" model="ir.actions.report">
+        <field name="name">Grant Fund Analysis (Restricted/Unrestricted)</field>
+        <field name="model">ngo.grant</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ngo_grant.grant_fund_analysis_template</field>
+        <field name="report_file">ngo_grant.grant_fund_analysis_template</field>
+        <field name="binding_model_id" ref="model_ngo_grant"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Donor Statement Report Action -->
+    <record id="action_grant_donor_statement" model="ir.actions.report">
+        <field name="name">Grant Donor Statement</field>
+        <field name="model">ngo.grant</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ngo_grant.grant_donor_statement_template</field>
+        <field name="report_file">ngo_grant.grant_donor_statement_template</field>
+        <field name="binding_model_id" ref="model_ngo_grant"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>

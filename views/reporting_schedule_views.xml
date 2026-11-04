@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Reporting Schedule List View -->
+        <record id="view_reporting_schedule_tree" model="ir.ui.view">
+            <field name="name">ngo.grant.reporting.schedule.tree</field>
+            <field name="model">ngo.grant.reporting.schedule</field>
+            <field name="arch" type="xml">
+                <list string="Grant Reporting Schedules">
+                    <field name="grant_id"/>
+                    <field name="name"/>
+                    <field name="report_type"/>
+                    <field name="report_period_start"/>
+                    <field name="report_period_end"/>
+                    <field name="report_date"/>
+                    <field name="responsible_id"/>
+                    <field name="state"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- Reporting Schedule Form View -->
+        <record id="view_reporting_schedule_form" model="ir.ui.view">
+            <field name="name">ngo.grant.reporting.schedule.form</field>
+            <field name="model">ngo.grant.reporting.schedule</field>
+            <field name="arch" type="xml">
+                <form string="Grant Reporting Schedule">
+                    <header>
+                        <button name="action_start" string="Start" type="object" invisible="state not in ['draft', 'scheduled']" class="btn-primary"/>
+                        <button name="action_submit" string="Submit" type="object" invisible="state != 'in_preparation'" class="btn-primary"/>
+                        <button name="action_approve" string="Approve" type="object" invisible="state != 'under_donor_review'" class="btn-primary"/>
+                        <button name="action_reject" string="Reject" type="object" invisible="state not in ['submitted', 'under_donor_review']" class="btn-danger"/>
+                        <button name="action_waive" string="Waive" type="object" invisible="state not in ['draft', 'scheduled', 'in_preparation', 'submitted']" class="btn-secondary"/>
+                        <button name="action_send_reminder" string="Send Reminder" type="object" class="btn-secondary"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_preparation,submitted,under_donor_review,accepted,completed,rejected,overdue,cancelled"/>
+                    </header>
+                    
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Report Name"/>
+                            </h1>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="grant_id"/>
+                                <field name="report_type"/>
+                                <field name="reporting_frequency"/>
+                                <field name="responsible_id"/>
+                                <field name="responsible_employee_id"/>
+                                <field name="donor_contact_id"/>
+                            </group>
+                            <group>
+                                <field name="report_period_start"/>
+                                <field name="report_period_end"/>
+                                <field name="report_date"/>
+                                <field name="submitted_date" readonly="1"/>
+                                <field name="donor_response_date" readonly="1"/>
+                                <field name="is_overdue" readonly="1"/>
+                                <field name="days_overdue" readonly="1"/>
+                                <field name="days_until_due" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <field name="donor_reference" placeholder="Donor reference..."/>
+                        </group>
+                        
+                        <group>
+                            <field name="description" placeholder="Report description..."/>
+                        </group>
+                        
+                        <group>
+                            <field name="requirements" placeholder="Specific requirements..."/>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Report Documents">
+                                <field name="document_ids">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="document_type"/>
+                                        <field name="document_date"/>
+                                    </list>
+                                </field>
+                            </page>
+                            
+                            <page string="Review">
+                                <group>
+                                    <field name="submitted_by" readonly="1"/>
+                                    <field name="approved_by" readonly="1"/>
+                                    <field name="donor_feedback" placeholder="Donor feedback..."/>
+                                </group>
+                            </page>
+                            
+                            <page string="Monitoring">
+                                <group>
+                                    <field name="reminder_sent" readonly="1"/>
+                                    <field name="reminder_count" readonly="1"/>
+                                </group>
+                            </page>
+                            
+                            <page string="Notes">
+                                <field name="notes" placeholder="Additional notes..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Reporting Schedule Action -->
+        <record id="action_reporting_schedule" model="ir.actions.act_window">
+            <field name="name">Grant Reporting Schedules</field>
+            <field name="res_model">ngo.grant.reporting.schedule</field>
+            <field name="view_mode">list,kanban,form,pivot,graph</field>
+        </record>
+        
+        <!-- Reporting Schedule Menu -->
+        <menuitem id="menu_reporting_schedule" name="Reporting Schedules" parent="menu_grant_monitoring" action="action_reporting_schedule" sequence="20" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        
+    </data>
+</odoo>

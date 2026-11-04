@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Demo Donors -->
+        <record id="demo_donor_1" model="ngo.grant.donor">
+            <field name="donor_code">DONOR-0001</field>
+            <field name="donor_type">multilateral</field>
+            <field name="donor_status">active</field>
+            <field name="name">United Nations Development Programme</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="preferred_currency_id" ref="base.USD"/>
+            <field name="reporting_language">english</field>
+            <field name="reporting_frequency">quarterly</field>
+            <field name="due_diligence_completed" eval="True"/>
+            <field name="due_diligence_date" eval="(DateTime.now() - relativedelta(months=6)).strftime('%Y-%m-%d')"/>
+        </record>
+        
+        <record id="demo_donor_2" model="ngo.grant.donor">
+            <field name="donor_code">DONOR-0002</field>
+            <field name="donor_type">bilateral</field>
+            <field name="donor_status">active</field>
+            <field name="name">USAID</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="preferred_currency_id" ref="base.USD"/>
+            <field name="reporting_language">english</field>
+            <field name="reporting_frequency">quarterly</field>
+            <field name="due_diligence_completed" eval="True"/>
+            <field name="due_diligence_date" eval="(DateTime.now() - relativedelta(months=6)).strftime('%Y-%m-%d')"/>
+        </record>
+        
+        <record id="demo_donor_3" model="ngo.grant.donor">
+            <field name="donor_code">DONOR-0003</field>
+            <field name="donor_type">private</field>
+            <field name="donor_status">active</field>
+            <field name="name">Bill &amp; Melinda Gates Foundation</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="preferred_currency_id" ref="base.USD"/>
+            <field name="reporting_language">english</field>
+            <field name="reporting_frequency">semi_annual</field>
+            <field name="due_diligence_completed" eval="True"/>
+            <field name="due_diligence_date" eval="(DateTime.now() - relativedelta(months=6)).strftime('%Y-%m-%d')"/>
+        </record>
+        
+        <!-- Demo Donor Contacts -->
+        <record id="demo_contact_1" model="ngo.grant.contact">
+            <field name="donor_id" ref="demo_donor_1"/>
+            <field name="partner_id" ref="base.partner_demo"/>
+            <field name="contact_role">program_manager</field>
+            <field name="primary_contact" eval="True"/>
+        </record>
+        
+        <record id="demo_contact_2" model="ngo.grant.contact">
+            <field name="donor_id" ref="demo_donor_2"/>
+            <field name="partner_id" ref="base.partner_demo"/>
+            <field name="contact_role">finance_manager</field>
+            <field name="primary_contact" eval="True"/>
+        </record>
+        
+    </data>
+</odoo>

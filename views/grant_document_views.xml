@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Document List View -->
+        <record id="view_document_tree" model="ir.ui.view">
+            <field name="name">ngo.grant.document.tree</field>
+            <field name="model">ngo.grant.document</field>
+            <field name="arch" type="xml">
+                <list string="Grant Documents">
+                    <field name="name"/>
+                    <field name="document_type"/>
+                    <field name="grant_id"/>
+                    <field name="document_date"/>
+                    <field name="expiry_date"/>
+                    <field name="state"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- Document Form View -->
+        <record id="view_document_form" model="ir.ui.view">
+            <field name="name">ngo.grant.document.form</field>
+            <field name="model">ngo.grant.document</field>
+            <field name="arch" type="xml">
+                <form string="Grant Document">
+                    <header>
+                        <button name="action_submit" string="Submit" type="object" invisible="state != 'draft'" groups="ngo_grant.group_ngo_manager" class="btn-primary"/>
+                        <button name="action_approve" string="Approve" type="object" invisible="state != 'submitted'" groups="ngo_grant.group_ngo_manager" class="btn-primary"/>
+                        <button name="action_reject" string="Reject" type="object" invisible="state != 'submitted'" groups="ngo_grant.group_ngo_manager" class="btn-danger"/>
+                        <button name="action_mark_expired" string="Mark Expired" type="object" invisible="state != 'approved'" groups="ngo_grant.group_ngo_manager" class="btn-secondary"/>
+                        <field name="state" widget="statusbar" readonly="1" statusbar_visible="draft,submitted,approved,active,archived,rejected,expired"/>
+                    </header>
+                    
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Document Name"/>
+                            </h1>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="grant_id"/>
+                                <field name="amendment_id" invisible="amendment_id == False"/>
+                                <field name="compliance_id" invisible="compliance_id == False"/>
+                                <field name="reporting_schedule_id" invisible="reporting_schedule_id == False"/>
+                                <field name="document_type"/>
+                                <field name="category"/>
+                                <field name="version"/>
+                            </group>
+                            <group>
+                                <field name="document_number"/>
+                                <field name="document_date"/>
+                                <field name="expiry_date"/>
+                                <field name="effective_date"/>
+                                <field name="confidentiality"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group>
+                                <field name="is_public"/>
+                                <field name="is_confidential"/>
+                                <field name="mandatory"/>
+                            </group>
+                            <group>
+                                <field name="document_id"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <field name="attachment" filename="file_name"/>
+                            <field name="file_name"/>
+                            <field name="file_size" readonly="1"/>
+                            <field name="mimetype" readonly="1" invisible="mimetype == False"/>
+                        </group>
+                        
+                        <group>
+                            <field name="description" placeholder="Document description..."/>
+                        </group>
+                    </sheet>
+                    
+                    <notebook>
+                            <page string="Approval">
+                                <group>
+                                    <field name="requires_approval"/>
+                                    <field name="approved" readonly="1"/>
+                                    <field name="approved_by" readonly="1"/>
+                                    <field name="approval_date" readonly="1"/>
+                                </group>
+                            </page>
+                            
+                            <page string="Submission">
+                                <group>
+                                    <field name="submitted_to_donor"/>
+                                    <field name="donor_submission_date"/>
+                                </group>
+                            </page>
+                            
+                            <page string="Monitoring">
+                                <group>
+                                    <field name="is_expired" readonly="1"/>
+                                    <field name="days_to_expiry" readonly="1"/>
+                                </group>
+                            </page>
+                            
+                            <page string="Notes">
+                                <field name="notes" placeholder="Additional notes..."/>
+                            </page>
+                        </notebook>
+                    
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Document Action -->
+        <record id="action_document" model="ir.actions.act_window">
+            <field name="name">Grant Documents</field>
+            <field name="res_model">ngo.grant.document</field>
+            <field name="view_mode">list,kanban,form,pivot,graph</field>
+        </record>
+        
+        <!-- Document Menu -->
+        <menuitem id="menu_document" name="Documents" parent="menu_grant_documents" action="action_document" sequence="10" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        
+    </data>
+</odoo>

@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Grant List View -->
+        <record id="view_grant_tree" model="ir.ui.view">
+            <field name="name">ngo.grant.tree</field>
+            <field name="model">ngo.grant</field>
+            <field name="arch" type="xml">
+                <list string="Grants">
+                    <field name="grant_number"/>
+                    <field name="grant_name"/>
+                    <field name="donor_reference"/>
+                    <field name="approved_amount"/>
+                    <field name="currency_id"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="state"/>
+                    <field name="active" widget="boolean_toggle"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- Grant Form View -->
+        <record id="view_grant_form" model="ir.ui.view">
+            <field name="name">ngo.grant.form</field>
+            <field name="model">ngo.grant</field>
+            <field name="arch" type="xml">
+                <form string="Grant">
+                    <header>
+                        <button name="action_submit" string="Submit" type="object" invisible="state != 'draft'" groups="ngo_grant.group_ngo_manager" class="btn-primary"/>
+                        <button name="action_send_for_review" string="Send for Review" type="object" invisible="state != 'submitted'" groups="ngo_grant.group_ngo_manager" class="btn-primary"/>
+                        <button name="action_approve" string="Approve and Post" type="object" invisible="state not in ['submitted', 'under_review']" groups="ngo_grant.group_ngo_approver" class="btn-primary"/>
+                        <button name="action_activate" string="Activate" type="object" invisible="state != 'approved'" groups="ngo_grant.group_ngo_manager" class="btn-primary"/>
+                        <button name="%(ngo_grant.action_grant_amendment_wizard)d" string="Create Amendment" type="action" invisible="state not in ['approved', 'active']" groups="ngo_grant.group_ngo_manager" class="btn-warning" context="{'default_grant_id': id}"/>
+                        <button name="%(ngo_grant.action_grant_export_wizard)d" string="Export / Download" type="action" class="btn-secondary" context="{'default_grant_id': id}"/>
+                        <button name="action_suspend" string="Suspend" type="object" invisible="state != 'active'" groups="ngo_grant.group_ngo_manager" class="btn-secondary"/>
+                        <button name="action_close" string="Close" type="object" invisible="state not in ['active', 'suspended', 'completed']" groups="ngo_grant.group_ngo_manager" class="btn-secondary"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="state not in ['draft', 'submitted', 'under_review']" groups="ngo_grant.group_ngo_manager" class="btn-danger"/>
+                        <field name="state" widget="statusbar" readonly="1" statusbar_visible="draft,submitted,under_review,approved,active,completed,closed,rejected,cancelled,suspended"/>
+                    </header>
+
+                    
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="grant_number" placeholder="Grant Number" readonly="state != 'draft'"/>
+                            </h1>
+                            <h2>
+                                <field name="grant_name" placeholder="Grant Name" readonly="state != 'draft'"/>
+                            </h2>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="short_name" readonly="state != 'draft'"/>
+                                <field name="currency_id" readonly="state != 'draft'"/>
+                                <field name="approved_amount" readonly="state != 'draft'"/>
+                                <field name="total_contributed_amount" readonly="1"/>
+                                <field name="remaining_contribution_amount" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="disbursed_amount" readonly="1"/>
+                                <field name="remaining_amount" readonly="1"/>
+                                <field name="funding_type_id" readonly="state != 'draft'"/>
+                                <field name="sector_id" readonly="state != 'draft'"/>
+                                <field name="program_area_id" domain="[('sector_id', '=', sector_id)]" readonly="state != 'draft'"/>
+                                <field name="company_id" readonly="state != 'draft'"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="Timeline">
+                                <field name="agreement_date" readonly="state != 'draft'"/>
+                                <field name="start_date" readonly="state != 'draft'"/>
+                                <field name="end_date" readonly="state != 'draft'"/>
+                                <field name="close_date" invisible="state != 'closed'"/>
+                            </group>
+                            <group string="Status">
+                                <field name="grant_stage" readonly="1"/>
+                                <field name="active" readonly="state != 'draft'"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <field name="description" placeholder="Grant description..." readonly="state != 'draft'"/>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Overview">
+                                <div class="row">
+                                    <div class="col-12 col-md-6 col-lg-3 mb-3">
+                                        <button name="action_view_projects" type="object" class="btn btn-link w-100 p-0">
+                                            <div class="card o_dashboard_graph h-100 border-0 shadow-sm" style="border-radius: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                                                <div class="card-body text-center py-4">
+                                                    <div class="mb-2">
+                                                        <i class="fa fa-tasks fa-2x text-primary"/>
+                                                    </div>
+                                                    <h5 class="card-title mb-2">Projects</h5>
+                                                    <h2 class="card-text mb-0"><field name="project_count" readonly="1"/></h2>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <div class="col-12 col-md-6 col-lg-3 mb-3">
+                                        <button name="action_view_amendments" type="object" class="btn btn-link w-100 p-0">
+                                            <div class="card o_dashboard_graph h-100 border-0 shadow-sm" style="border-radius: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                                                <div class="card-body text-center py-4">
+                                                    <div class="mb-2">
+                                                        <i class="fa fa-edit fa-2x text-warning"/>
+                                                    </div>
+                                                    <h5 class="card-title mb-2">Amendments</h5>
+                                                    <h2 class="card-text mb-0"><field name="amendment_count" readonly="1"/></h2>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <div class="col-12 col-md-6 col-lg-3 mb-3">
+                                        <button name="action_view_compliance" type="object" class="btn btn-link w-100 p-0">
+                                            <div class="card o_dashboard_graph h-100 border-0 shadow-sm" style="border-radius: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                                                <div class="card-body text-center py-4">
+                                                    <div class="mb-2">
+                                                        <i class="fa fa-check-circle fa-2x text-success"/>
+                                                    </div>
+                                                    <h5 class="card-title mb-2">Compliance</h5>
+                                                    <h2 class="card-text mb-0"><field name="compliance_count" readonly="1"/></h2>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <div class="col-12 col-md-6 col-lg-3 mb-3">
+                                        <button name="action_view_reports" type="object" class="btn btn-link w-100 p-0">
+                                            <div class="card o_dashboard_graph h-100 border-0 shadow-sm" style="border-radius: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                                                <div class="card-body text-center py-4">
+                                                    <div class="mb-2">
+                                                        <i class="fa fa-calendar fa-2x text-info"/>
+                                                    </div>
+                                                    <h5 class="card-title mb-2">Reports</h5>
+                                                    <h2 class="card-text mb-0"><field name="reporting_schedule_count" readonly="1"/></h2>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <div class="col-12 col-md-6 col-lg-3 mb-3">
+                                        <button name="action_view_disbursements" type="object" class="btn btn-link w-100 p-0">
+                                            <div class="card o_dashboard_graph h-100 border-0 shadow-sm" style="border-radius: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                                                <div class="card-body text-center py-4">
+                                                    <div class="mb-2">
+                                                        <i class="fa fa-money fa-2x text-success"/>
+                                                    </div>
+                                                    <h5 class="card-title mb-2">Disbursements</h5>
+                                                    <h2 class="card-text mb-0"><field name="disbursement_count" readonly="1"/></h2>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </page>
+                            
+                            <page string="Donors">
+                                <field name="donor_line_ids" readonly="state not in ['draft', 'submitted']">
+                                    <list editable="bottom">
+                                        <field name="donor_id"/>
+                                        <field name="lead_donor"/>
+                                        <field name="contribution_amount"/>
+                                        <field name="contribution_percentage"/>
+                                        <field name="donor_reference"/>
+                                        <field name="agreement_reference"/>
+                                        <field name="state"/>
+                                    </list>
+                                </field>
+                            </page>
+                            
+                            <page string="Projects">
+                                <field name="project_ids" readonly="state != 'draft'">
+                                    <list editable="bottom">
+                                        <field name="project_id"/>
+                                        <field name="allocation_amount"/>
+                                        <field name="allocation_percentage"/>
+                                        <field name="is_primary_funding"/>
+                                        <field name="state"/>
+                                    </list>
+                                </field>
+                            </page>
+                            
+                            <page string="Amendments">
+                                <field name="amendment_ids">
+                                    <list>
+                                        <field name="amendment_number"/>
+                                        <field name="amendment_name"/>
+                                        <field name="amendment_type"/>
+                                        <field name="amendment_date"/>
+                                        <field name="state"/>
+                                    </list>
+                                </field>
+                            </page>
+                            
+                            <page string="Documents">
+                                <field name="document_ids" readonly="state not in ['under_review', 'approved', 'active', 'completed']">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="document_type"/>
+                                        <field name="document_date"/>
+                                        <field name="state"/>
+                                    </list>
+                                </field>
+                            </page>
+                            
+                            <page string="Disbursements">
+                                <field name="disbursement_ids">
+                                    <list editable="bottom">
+                                        <field name="name" readonly="1"/>
+                                        <field name="amount"/>
+                                        <field name="disbursement_date"/>
+                                        <field name="disbursement_type_id"/>
+                                        <field name="state"/>
+                                    </list>
+                                </field>
+                            </page>
+                            
+                            <page string="Compliance">
+                                <field name="compliance_ids" readonly="state not in ['under_review', 'approved', 'active', 'completed']">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="compliance_type"/>
+                                        <field name="due_date"/>
+                                        <field name="priority"/>
+                                        <field name="state"/>
+                                    </list>
+                                </field>
+                            </page>
+                            
+
+
+                            <page string="Conditions &amp; Milestones">
+                                <field name="milestone_ids" readonly="state not in ['under_review', 'approved', 'active', 'completed']">
+                                    <list editable="bottom">
+                                        <field name="name"/>
+                                        <field name="target_date"/>
+                                        <field name="completion_date"/>
+                                        <field name="release_amount"/>
+                                        <field name="state"/>
+                                        <button name="action_submit" string="Submit" type="object" invisible="state != 'draft'" class="btn-sm btn-secondary"/>
+                                        <button name="action_verify" string="Verify" type="object" invisible="state != 'submitted'" class="btn-sm btn-primary"/>
+                                        <button name="action_release_funds" string="Release Funds" type="object" invisible="state != 'verified'" class="btn-sm btn-success"/>
+                                    </list>
+                                </field>
+                            </page>
+
+                            <page string="Approval Chain" groups="ngo_grant.group_ngo_manager">
+                                <field name="approval_step_ids" readonly="state != 'draft'">
+                                    <list editable="bottom">
+                                        <field name="sequence"/>
+                                        <field name="name"/>
+                                        <field name="approver_id"/>
+                                        <field name="min_amount"/>
+                                        <field name="state"/>
+                                        <field name="action_user_id" readonly="1"/>
+                                        <field name="action_date" readonly="1"/>
+                                    </list>
+                                </field>
+                            </page>
+
+                            <page string="My Approval Tasks" groups="ngo_grant.group_ngo_approver">
+                                <field name="approval_step_ids" domain="[('approver_id', '=', uid)]" readonly="1">
+                                    <list create="0" edit="0" delete="0">
+                                        <field name="sequence"/>
+                                        <field name="name"/>
+                                        <field name="state"/>
+                                        <field name="can_approve" invisible="1"/>
+                                        <button name="action_approve_step" string="Approve" type="object" invisible="state != 'pending' or not can_approve" class="btn-sm btn-success"/>
+                                        <button name="action_reject_step" string="Reject" type="object" invisible="state != 'pending' or not can_approve" class="btn-sm btn-danger"/>
+                                    </list>
+                                </field>
+                            </page>
+
+                            <page string="Audit Trail">
+                                <field name="audit_log_ids" readonly="1">
+                                    <list string="Audit Logs">
+                                        <field name="timestamp"/>
+                                        <field name="user_id"/>
+                                        <field name="field_description"/>
+                                        <field name="old_value"/>
+                                        <field name="new_value"/>
+                                        <field name="action_type"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Grant Action -->
+        <record id="action_grant" model="ir.actions.act_window">
+            <field name="name">Grants</field>
+            <field name="res_model">ngo.grant</field>
+            <field name="view_mode">list,kanban,form,pivot,graph</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first grant to start managing donor funding.
+                </p>
+            </field>
+        </record>
+        
+        <!-- Grant Menu -->
+        <menuitem id="menu_grant_root" name="Grants" web_icon="ngo_grant,static/description/icon.png" sequence="20" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+        <menuitem id="menu_grant_management" name="Grant Management" parent="menu_grant_root" sequence="10" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+        <menuitem id="menu_grant" name="All Grants" parent="menu_grant_management" action="action_grant" sequence="10" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+        <menuitem id="menu_grant_monitoring" name="Monitoring &amp; Reporting" parent="menu_grant_root" sequence="30" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_grant_documents" name="Documents" parent="menu_grant_root" sequence="40" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        
+    </data>
+</odoo>
+

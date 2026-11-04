@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Compliance List View -->
+        <record id="view_compliance_tree" model="ir.ui.view">
+            <field name="name">ngo.grant.compliance.tree</field>
+            <field name="model">ngo.grant.compliance</field>
+            <field name="arch" type="xml">
+                <list string="Grant Compliance">
+                    <field name="grant_id"/>
+                    <field name="name"/>
+                    <field name="compliance_type"/>
+                    <field name="due_date"/>
+                    <field name="priority"/>
+                    <field name="responsible_id"/>
+                    <field name="state"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- Compliance Form View -->
+        <record id="view_compliance_form" model="ir.ui.view">
+            <field name="name">ngo.grant.compliance.form</field>
+            <field name="model">ngo.grant.compliance</field>
+            <field name="arch" type="xml">
+                <form string="Grant Compliance">
+                    <header>
+                        <button name="action_start" string="Start" type="object" invisible="state != 'draft'" class="btn-primary"/>
+                        <button name="action_submit" string="Submit" type="object" invisible="state != 'in_progress'" class="btn-primary"/>
+                        <button name="action_approve" string="Approve" type="object" invisible="state not in ['evidence_submitted', 'under_verification']" class="btn-primary"/>
+                        <button name="action_reject" string="Reject" type="object" invisible="state not in ['evidence_submitted', 'under_verification']" class="btn-danger"/>
+                        <button name="action_waive" string="Waive" type="object" invisible="state not in ['draft', 'assigned', 'in_progress', 'evidence_submitted']" class="btn-secondary"/>
+                        <button name="action_send_reminder" string="Send Reminder" type="object" class="btn-secondary"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,assigned,in_progress,evidence_submitted,under_verification,completed,overdue,waived,cancelled"/>
+                    </header>
+                    
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Requirement"/>
+                            </h1>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="grant_id"/>
+                                <field name="compliance_type"/>
+                                <field name="priority"/>
+                                <field name="responsible_id"/>
+                                <field name="responsible_employee_id"/>
+                            </group>
+                            <group>
+                                <field name="due_date"/>
+                                <field name="completed_date" readonly="1"/>
+                                <field name="reminder_sent" readonly="1"/>
+                                <field name="reminder_count" readonly="1"/>
+                                <field name="is_overdue" readonly="1"/>
+                                <field name="days_overdue" readonly="1"/>
+                                <field name="days_until_due" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <field name="description" placeholder="Detailed description..."/>
+                        </group>
+                        
+                        <group>
+                            <field name="requirements" placeholder="Specific requirements..."/>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Evidence Documents">
+                                <field name="document_ids">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="document_type"/>
+                                        <field name="document_date"/>
+                                    </list>
+                                </field>
+                            </page>
+                            
+                            <page string="Verification">
+                                <group>
+                                    <field name="verified"/>
+                                    <field name="verified_by" readonly="1"/>
+                                    <field name="verified_date" readonly="1"/>
+                                    <field name="verification_notes" placeholder="Verification notes..."/>
+                                </group>
+                            </page>
+                            
+                            <page string="Notes">
+                                <field name="notes" placeholder="Additional notes..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Compliance Action -->
+        <record id="action_compliance" model="ir.actions.act_window">
+            <field name="name">Grant Compliance</field>
+            <field name="res_model">ngo.grant.compliance</field>
+            <field name="view_mode">list,kanban,form,pivot,graph</field>
+        </record>
+        
+        <!-- Compliance Menu -->
+        <menuitem id="menu_compliance" name="Compliance" parent="menu_grant_monitoring" action="action_compliance" sequence="10" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        
+    </data>
+</odoo>

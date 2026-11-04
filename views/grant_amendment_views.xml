@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Amendment List View -->
+        <record id="view_amendment_tree" model="ir.ui.view">
+            <field name="name">ngo.grant.amendment.tree</field>
+            <field name="model">ngo.grant.amendment</field>
+            <field name="arch" type="xml">
+                <list string="Grant Amendments">
+                    <field name="amendment_number"/>
+                    <field name="amendment_name"/>
+                    <field name="grant_id"/>
+                    <field name="amendment_type"/>
+                    <field name="amount_change"/>
+                    <field name="amendment_date"/>
+                    <field name="state"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- Amendment Form View -->
+        <record id="view_amendment_form" model="ir.ui.view">
+            <field name="name">ngo.grant.amendment.form</field>
+            <field name="model">ngo.grant.amendment</field>
+            <field name="arch" type="xml">
+                <form string="Grant Amendment">
+                    <header>
+                        <button name="action_submit" string="Submit" type="object" invisible="state != 'draft'" class="btn-primary"/>
+                        <button name="action_approve" string="Approve" type="object" invisible="state not in ['submitted', 'under_review']" class="btn-primary"/>
+                        <button name="action_reject" string="Reject" type="object" invisible="state not in ['submitted', 'under_review']" class="btn-danger"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="state not in ['draft', 'submitted', 'under_review']" class="btn-secondary"/>
+                        <button name="action_restore" string="Restore to Draft" type="object" invisible="state != 'approved'" groups="ngo_grant.group_ngo_manager" class="btn-warning"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submitted,under_review,approved,rejected,cancelled"/>
+                    </header>
+                    
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="amendment_number" placeholder="Amendment Number"/>
+                            </h1>
+                            <h2>
+                                <field name="amendment_name" placeholder="Amendment Name"/>
+                            </h2>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="grant_id"/>
+                                <field name="amendment_type"/>
+                                <field name="amendment_date"/>
+                                <field name="effective_date"/>
+                                <field name="request_date"/>
+                            </group>
+                            <group>
+                                <field name="amount_change"/>
+                                <field name="previous_approved_amount" readonly="1"/>
+                                <field name="new_approved_amount" readonly="1"/>
+                                <field name="original_end_date"/>
+                                <field name="new_end_date"/>
+                                <field name="extension_days" readonly="1"/>
+                            </group>
+                        </group>
+
+                        
+                        <group>
+                            <field name="description" placeholder="Detailed description..."/>
+                            <field name="amendment_reason" placeholder="Reason for this amendment..."/>
+                            <field name="donor_reference" placeholder="Donor reference..."/>
+                        </group>
+                        
+                        <group string="Approval" invisible="state != 'approved'">
+                            <group>
+                                <field name="approved_by" readonly="1"/>
+                                <field name="approval_date" readonly="1"/>
+                                <field name="approval_reference" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Rejection" invisible="[('state', '!=', 'rejected')]">
+                            <field name="rejection_reason"/>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Documents">
+                                <field name="document_ids">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="document_type"/>
+                                        <field name="document_date"/>
+                                    </list>
+                                </field>
+                            </page>
+                            
+                            <page string="Monitoring">
+                                <group>
+                                    <field name="budget_version_count" readonly="1"/>
+                                    <field name="document_count" readonly="1"/>
+                                </group>
+                            </page>
+                            
+                            <page string="Internal Notes">
+                                <field name="internal_notes" placeholder="Internal notes..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Amendment Action -->
+        <record id="action_amendment" model="ir.actions.act_window">
+            <field name="name">Grant Amendments</field>
+            <field name="res_model">ngo.grant.amendment</field>
+            <field name="view_mode">list,kanban,form,pivot,graph</field>
+        </record>
+        
+        <!-- Amendment Menu -->
+        <menuitem id="menu_amendment" name="Amendments" parent="menu_grant_management" action="action_amendment" sequence="30" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+        
+    </data>
+</odoo>

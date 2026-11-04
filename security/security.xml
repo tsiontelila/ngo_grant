@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo> 
+    <data noupdate="0">
+        <!-- Groups Privilege -->
+
+        <record id="res_groups_privilege_ngo_grant" model="res.groups.privilege">
+            <field name="name">NGO Grant</field>
+            <field name="category_id" ref="ngo_core.module_category_ngo"/>
+        </record>
+
+        <record id="group_ngo_user" model="res.groups">
+            <field name="name">NGO Grant Data Entry</field>
+            <field name="privilege_id" ref="res_groups_privilege_ngo_grant"/>
+            <field name="comment">Create grant records only. No edit after submission.</field>
+            <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        </record>
+
+        <record id="group_ngo_approver" model="res.groups">
+            <field name="name">NGO Grant Approver</field>
+            <field name="privilege_id" ref="res_groups_privilege_ngo_grant"/>
+            <field name="comment">Approve amendments and budget revisions.</field>
+            <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        </record>
+
+        <record id="group_ngo_manager" model="res.groups">
+            <field name="name">NGO Grant Manager</field>
+            <field name="privilege_id" ref="res_groups_privilege_ngo_grant"/>
+            <field name="comment">Approve grants and budgets; manage donor registers; correct records.</field>
+            <field name="implied_ids" eval="[(4, ref('ngo_grant.group_ngo_approver'))]"/>
+        </record>
+
+        <record id="group_ngo_director" model="res.groups">
+            <field name="name">NGO Grant Administrator</field>
+            <field name="privilege_id" ref="res_groups_privilege_ngo_grant"/>
+            <field name="comment">Technical configuration only - fields, stages, security. No grant data editing.</field>
+            <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        </record>
+
+        <record id="group_ngo_grant_officer" model="res.groups">
+            <field name="name">NGO Grant Officer</field>
+            <field name="privilege_id" ref="res_groups_privilege_ngo_grant"/>
+            <field name="comment">Register and update grants; record disbursements; verify compliance.</field>
+            <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        </record>
+
+        <record id="group_ngo_grant_read" model="res.groups">
+            <field name="name">NGO Grant Viewer</field>
+            <field name="privilege_id" ref="res_groups_privilege_ngo_grant"/>
+            <field name="comment">View registers and summaries for oversight, reporting and reconciliation.</field>
+            <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        </record>
+
+        <!-- No record rules - using ACLs only for simple access control -->
+    </data>
+</odoo>

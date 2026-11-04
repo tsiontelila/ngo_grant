@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="disbursement_type_initial" model="ngo.grant.disbursement.type">
+            <field name="name">Initial Disbursement</field>
+            <field name="code">initial</field>
+        </record>
+        <record id="disbursement_type_installment" model="ngo.grant.disbursement.type">
+            <field name="name">Installment</field>
+            <field name="code">installment</field>
+        </record>
+        <record id="disbursement_type_supplementary" model="ngo.grant.disbursement.type">
+            <field name="name">Supplementary</field>
+            <field name="code">supplementary</field>
+        </record>
+        <record id="disbursement_type_refund" model="ngo.grant.disbursement.type">
+            <field name="name">Refund</field>
+            <field name="code">refund</field>
+        </record>
+        <record id="disbursement_type_adjustment" model="ngo.grant.disbursement.type">
+            <field name="name">Adjustment</field>
+            <field name="code">adjustment</field>
+        </record>
+    </data>
+</odoo>

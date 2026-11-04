@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Donor Category List View -->
+        <record id="view_donor_category_tree" model="ir.ui.view">
+            <field name="name">ngo.grant.donor.category.tree</field>
+            <field name="model">ngo.grant.donor.category</field>
+            <field name="arch" type="xml">
+                <list string="Donor Categories">
+                    <field name="name"/>
+                    <field name="donor_count" widget="stat_info"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- Donor Category Form View -->
+        <record id="view_donor_category_form" model="ir.ui.view">
+            <field name="name">ngo.grant.donor.category.form</field>
+            <field name="model">ngo.grant.donor.category</field>
+            <field name="arch" type="xml">
+                <form string="Donor Category">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Category Name"/>
+                            </h1>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="description"/>
+                            </group>
+                            <group>
+                                <field name="color"/>
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Donors">
+                                <field name="donor_ids">
+                                    <list>
+                                        <field name="donor_code"/>
+                                        <field name="name"/>
+                                        <field name="donor_status"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Donor Category Action -->
+        <record id="action_donor_category" model="ir.actions.act_window">
+            <field name="name">Donor Categories</field>
+            <field name="res_model">ngo.grant.donor.category</field>
+            <field name="view_mode">list,kanban,form,pivot,graph</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first donor category to classify your donors.
+                </p>
+            </field>
+        </record>
+        
+        <!-- Donor Category Menu -->
+        <menuitem id="menu_donor_category" name="Categories" parent="menu_donor_root" action="action_donor_category" sequence="20" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+        
+    </data>
+</odoo>

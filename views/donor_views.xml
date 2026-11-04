@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Donor List View -->
+        <record id="view_donor_tree" model="ir.ui.view">
+            <field name="name">ngo.grant.donor.tree</field>
+            <field name="model">ngo.grant.donor</field>
+            <field name="arch" type="xml">
+                <list string="Donors">
+                    <field name="donor_code"/>
+                    <field name="name"/>
+                    <field name="donor_type"/>
+                    <field name="donor_status"/>
+                    <field name="country_id"/>
+                    <field name="grant_count"/>
+                    <field name="total_funding"/>
+                    <field name="active" widget="boolean_toggle"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- Donor Form View -->
+        <record id="view_donor_form" model="ir.ui.view">
+            <field name="name">ngo.grant.donor.form</field>
+            <field name="model">ngo.grant.donor</field>
+            <field name="arch" type="xml">
+                <form string="Donor">
+                    <header>
+                        <button name="action_activate" string="Activate" type="object" invisible="donor_status not in ['inactive', 'suspended']" class="btn-primary"/>
+                        <button name="action_set_inactive" string="Set Inactive" type="object" invisible="donor_status not in ['active', 'suspended']" class="btn-secondary" confirm="Are you sure you want to set this donor to inactive?"/>
+                        <button name="action_suspend" string="Suspend" type="object" invisible="donor_status not in ['active']" class="btn-secondary" confirm="Are you sure you want to suspend this donor?"/>
+                        <button name="action_blacklist" string="Blacklist" type="object" invisible="donor_status == 'blacklisted'" class="btn-secondary" confirm="Are you sure you want to blacklist this donor? This action will prevent the donor from participating in any grants."/>
+                        <button name="action_restore" string="Restore" type="object" invisible="donor_status != 'blacklisted'" class="btn-primary" confirm="Are you sure you want to restore this blacklisted donor to active status?"/>
+                        <button name="action_view_grants" string="View Grants" type="object" class="btn-secondary"/>
+                        <button name="action_view_projects" string="View Projects" type="object" class="btn-secondary"/>
+                        <field name="donor_status" widget="statusbar" statusbar_visible="active,inactive,suspended,blacklisted"/>
+                    </header>
+                    
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Donor Name"/>
+                            </h1>
+                            <h2>
+                                <field name="donor_code" placeholder="Donor Code"/>
+                            </h2>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="partner_id" invisible="True"/>
+                                <field name="donor_type"/>
+                                <field name="donor_category_id"/>
+                                <field name="country_id"/>
+                                <field name="preferred_currency_id"/>
+                            </group>
+                            <group>
+                                <field name="email"/>
+                                <field name="phone"/>
+                                <field name="street"/>
+                                <field name="city"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group>
+                                <field name="reporting_language"/>
+                                <field name="reporting_frequency"/>
+                                <!-- <field name="reporting_template_id"/> -->
+                                <field name="due_diligence_completed"/>
+                                <field name="due_diligence_date" invisible="not due_diligence_completed"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <field name="compliance_notes" placeholder="Compliance notes..."/>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Overview">
+                                <group>
+                                    <group>
+                                        <field name="grant_count" readonly="1"/>
+                                        <field name="active_grant_count" readonly="1"/>
+                                        <field name="total_funding" readonly="1"/>
+                                        <field name="active_project_count" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            
+                            <page string="Contacts">
+                                <field name="contact_ids">
+                                    <list editable="bottom">
+                                        <field name="partner_id"/>
+                                        <field name="contact_role"/>
+                                        <field name="email"/>
+                                        <field name="phone"/>
+                                        <field name="primary_contact"/>
+                                        <field name="active"/>
+                                    </list>
+                                </field>
+                            </page>
+                            
+                            <page string="Grant Participations">
+                                <field name="donor_line_ids">
+                                    <list editable="bottom">
+                                        <field name="grant_id"/>
+                                        <field name="lead_donor"/>
+                                        <field name="contribution_amount"/>
+                                        <field name="contribution_percentage"/>
+                                        <field name="state"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Donor Action -->
+        <record id="action_donor" model="ir.actions.act_window">
+            <field name="name">Donors</field>
+            <field name="res_model">ngo.grant.donor</field>
+            <field name="view_mode">list,kanban,form,pivot,graph</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first donor to start managing grant funding.
+                </p>
+            </field>
+        </record>
+        
+        <!-- Donor Menu -->
+        <menuitem id="menu_donor_root" name="Donors" parent="menu_grant_root" sequence="10" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+        <menuitem id="menu_donor" name="All Donors" parent="menu_donor_root" action="action_donor" sequence="10" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+        
+    </data>
+</odoo>

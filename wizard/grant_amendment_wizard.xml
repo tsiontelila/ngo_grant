@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Grant Amendment Wizard Form View -->
+        <record id="view_grant_amendment_wizard_form" model="ir.ui.view">
+            <field name="name">ngo.grant.amendment.wizard.form</field>
+            <field name="model">ngo.grant.amendment.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Create Grant Amendment">
+                    <sheet>
+                        <group>
+                            <field name="grant_id"/>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="amendment_name"/>
+                                <field name="amendment_type"/>
+                            </group>
+                            <group>
+                                <field name="amount_change" invisible="amendment_type not in ['additional_funding', 'budget_revision']"/>
+                                <field name="new_end_date" invisible="amendment_type not in ['extension', 'additional_funding']"/>
+                                <field name="effective_date"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="description" placeholder="Detailed description of the amendment..."/>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="action_create_amendment" string="Create Amendment" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Grant Amendment Wizard Action -->
+        <record id="action_grant_amendment_wizard" model="ir.actions.act_window">
+            <field name="name">Create Grant Amendment</field>
+            <field name="res_model">ngo.grant.amendment.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        
+    </data>
+</odoo>

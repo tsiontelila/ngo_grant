@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        
+        <!-- Grant Approval Template -->
+        <record id="email_template_grant_approval" model="mail.template">
+            <field name="name">Grant Approval Notification</field>
+            <field name="model_id" ref="model_ngo_grant"/>
+            <field name="subject">Grant Approved: ${object.grant_number}</field>
+            <field name="body_html" type="html">
+                <p>Dear ${object.user_id.name or 'Grant Manager'},</p>
+                <p>The grant <strong>${object.grant_number} - ${object.grant_name}</strong> has been approved.</p>
+                <p>Grant Details:</p>
+                <ul>
+                    <li>Approved Amount: ${object.approved_amount} ${object.currency_id.name}</li>
+                    <li>Start Date: ${object.start_date}</li>
+                    <li>End Date: ${object.end_date}</li>
+                </ul>
+                <p>You can now activate the grant to begin implementation.</p>
+            </field>
+            <field name="email_from">${object.company_id.email or 'noreply@example.com'}</field>
+            <field name="lang">${object.user_id.lang}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+        
+        <!-- Amendment Approval Template -->
+        <record id="email_template_amendment_approval" model="mail.template">
+            <field name="name">Amendment Approval Notification</field>
+            <field name="model_id" ref="model_ngo_grant_amendment"/>
+            <field name="subject">Amendment Approved: ${object.amendment_number}</field>
+            <field name="body_html" type="html">
+                <p>Dear ${object.grant_id.user_id.name or 'Grant Manager'},</p>
+                <p>The amendment <strong>${object.amendment_number} - ${object.amendment_name}</strong> for grant ${object.grant_id.grant_number} has been approved.</p>
+                <p>Amendment Details:</p>
+                <ul>
+                    <li>Type: ${dict(object._fields['amendment_type'].selection).get(object.amendment_type)}</li>
+                    <li>Amount Change: ${object.amount_change or 'N/A'} ${object.currency_id.name}</li>
+                    <li>New End Date: ${object.new_end_date or 'N/A'}</li>
+                </ul>
+                <p>The grant has been updated accordingly.</p>
+            </field>
+            <field name="email_from">${object.grant_id.company_id.email or 'noreply@example.com'}</field>
+            <field name="lang">${object.grant_id.user_id.lang}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+        
+        <!-- Compliance Reminder Template -->
+        <record id="email_template_compliance_reminder" model="mail.template">
+            <field name="name">Compliance Reminder</field>
+            <field name="model_id" ref="model_ngo_grant_compliance"/>
+            <field name="subject">Compliance Due: {{ object.name }}</field>
+            <field name="body_html" type="html">
+                <p>Dear {{ object.responsible_id.name or 'Responsible User' }},</p>
+                <p>This is a reminder that the compliance requirement <strong>{{ object.name }}</strong> for grant {{ object.grant_id.grant_number }} is due on {{ object.due_date }}.</p>
+                <p>Compliance Details:</p>
+                <ul>
+                    <li>Type: {{ object.compliance_type }}</li>
+                    <li>Due Date: {{ object.due_date }}</li>
+                    <li>Priority: {{ object.priority }}</li>
+                </ul>
+                <p>Please ensure this is completed on time.</p>
+            </field>
+            <field name="email_from">{{ object.grant_id.company_id.email or 'noreply@example.com' }}</field>
+            <field name="lang">en_US</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+        
+        <!-- Report Reminder Template -->
+        <record id="email_template_report_reminder" model="mail.template">
+            <field name="name">Report Reminder</field>
+            <field name="model_id" ref="model_ngo_grant_reporting_schedule"/>
+            <field name="subject">Report Due: {{ object.name }}</field>
+            <field name="body_html" type="html">
+                <p>Dear {{ object.responsible_id.name or 'Responsible User' }},</p>
+                <p>This is a reminder that the report <strong>{{ object.name }}</strong> for grant {{ object.grant_id.grant_number }} is due on {{ object.report_date }}.</p>
+                <p>Report Details:</p>
+                <ul>
+                    <li>Type: {{ object.report_type }}</li>
+                    <li>Report Period: {{ object.report_period_start }} to {{ object.report_period_end }}</li>
+                    <li>Due Date: {{ object.report_date }}</li>
+                </ul>
+                <p>Please ensure the report is submitted on time.</p>
+            </field>
+            <field name="email_from">{{ object.grant_id.company_id.email or 'noreply@example.com' }}</field>
+            <field name="lang">en_US</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+        
+        <!-- Grant Expiry Warning Template -->
+        <record id="email_template_grant_expiry" model="mail.template">
+            <field name="name">Grant Expiry Warning</field>
+            <field name="model_id" ref="model_ngo_grant"/>
+            <field name="subject">Grant Expiring Soon: ${object.grant_number}</field>
+            <field name="body_html" type="html">
+                <p>Dear ${object.user_id.name or 'Grant Manager'},</p>
+                <p>The grant <strong>${object.grant_number} - ${object.grant_name}</strong> is expiring on ${object.end_date}.</p>
+                <p>Please ensure all activities are completed and necessary extensions are requested if needed.</p>
+                <p>Grant Details:</p>
+                <ul>
+                    <li>Approved Amount: ${object.approved_amount} ${object.currency_id.name}</li>
+                    <li>End Date: ${object.end_date}</li>
+                    <li>Remaining Amount: ${object.remaining_amount} ${object.currency_id.name}</li>
+                </ul>
+            </field>
+            <field name="email_from">${object.company_id.email or 'noreply@example.com'}</field>
+            <field name="lang">${object.user_id.lang}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <!-- Budget Overrun Notification Template -->
+        <record id="email_template_budget_overrun" model="mail.template">
+            <field name="name">Budget Overrun / Threshold Alert</field>
+            <field name="model_id" ref="model_ngo_grant_budget_period"/>
+            <field name="subject">Budget Alert: ${object.grant_id.grant_number} / ${object.name}</field>
+            <field name="body_html" type="html">
+                <p>Dear Grant Manager,</p>
+                <p>This is an automated budget utilization alert for:</p>
+                <ul>
+                    <li><strong>Grant:</strong> ${object.grant_id.grant_number} — ${object.grant_id.grant_name}</li>
+                    <li><strong>Budget Period:</strong> ${object.name} (${object.start_date} to ${object.end_date})</li>
+                    <li><strong>Allocated Budget:</strong> ${object.allocated_amount} ${object.currency_id.name}</li>
+                    <li><strong>Spent Amount:</strong> ${object.spent_amount} ${object.currency_id.name}</li>
+                    <li><strong>Remaining Budget:</strong> ${object.remaining_amount} ${object.currency_id.name}</li>
+                    <li><strong>Utilization Rate:</strong> ${round(object.utilization_rate, 1)}%</li>
+                    <li><strong>Overrun Rule:</strong> ${dict(object._fields['overrun_action'].selection).get(object.overrun_action)}</li>
+                </ul>
+                <p>Please take immediate action to review expenditures and ensure compliance with the grant budget.</p>
+            </field>
+            <field name="email_from">${object.grant_id.company_id.email or 'noreply@example.com'}</field>
+            <field name="email_to">${object.grant_id.user_id.email or ''}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <!-- Unspent Balance Reminder Template -->
+        <record id="email_template_unspent_balance" model="mail.template">
+            <field name="name">Unspent Grant Balance Reminder</field>
+            <field name="model_id" ref="model_ngo_grant"/>
+            <field name="subject">Unspent Balance Reminder: ${object.grant_number}</field>
+            <field name="body_html" type="html">
+                <p>Dear ${object.user_id.name or 'Grant Manager'},</p>
+                <p>Grant <strong>${object.grant_number} - ${object.grant_name}</strong> has a significant unspent balance approaching the end date.</p>
+                <ul>
+                    <li>Approved Amount: ${object.approved_amount} ${object.currency_id.name}</li>
+                    <li>Disbursed Amount: ${object.disbursed_amount} ${object.currency_id.name}</li>
+                    <li>Remaining Amount: ${object.remaining_amount} ${object.currency_id.name}</li>
+                    <li>Grant End Date: ${object.end_date}</li>
+                </ul>
+                <p>Please review disbursement schedules and submit any pending expense reports before the grant closes.</p>
+            </field>
+            <field name="email_from">${object.company_id.email or 'noreply@example.com'}</field>
+            <field name="lang">${object.user_id.lang}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+    </data>
+</odoo>
+

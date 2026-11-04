@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_grant_general_analysis_pivot" model="ir.ui.view">
+            <field name="name">ngo.grant.general.analysis.pivot</field>
+            <field name="model">ngo.grant</field>
+            <field name="arch" type="xml">
+                <pivot string="General Grant Analysis">
+                    <field name="sector_id" type="row"/>
+                    <field name="program_area_id" type="row"/>
+                    <field name="funding_type_id" type="row"/>
+                    <field name="state" type="col"/>
+                    <field name="approved_amount" type="measure"/>
+                    <field name="total_contributed_amount" type="measure"/>
+                    <field name="remaining_contribution_amount" type="measure"/>
+                    <field name="disbursed_amount" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="view_grant_general_analysis_graph" model="ir.ui.view">
+            <field name="name">ngo.grant.general.analysis.graph</field>
+            <field name="model">ngo.grant</field>
+            <field name="arch" type="xml">
+                <graph string="General Grant Analysis" type="bar">
+                    <field name="sector_id"/>
+                    <field name="total_contributed_amount" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <record id="action_grant_general_analysis" model="ir.actions.act_window">
+            <field name="name">General Grant Analysis</field>
+            <field name="res_model">ngo.grant</field>
+            <field name="view_mode">pivot,graph</field>
+            <field name="view_id" ref="view_grant_general_analysis_pivot"/>
+        </record>
+
+        <menuitem id="menu_grant_reporting" name="Reporting"
+                  parent="menu_grant_root" sequence="50"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+
+        <menuitem id="menu_reporting_general_analysis" name="General Analysis"
+                  parent="menu_grant_reporting" action="action_grant_general_analysis" sequence="5"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_financial" name="Financial Grant Reports"
+                  parent="menu_grant_reporting" action="action_grant_general_analysis" sequence="10"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_grants" name="Grant Reports"
+                  parent="menu_grant_reporting" action="action_grant_general_analysis" sequence="20"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_donors" name="Donor Reports"
+                  parent="menu_grant_reporting" action="action_donor" sequence="20"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_donor_categories" name="Donor Category Reports"
+                  parent="menu_grant_reporting" action="action_donor_category" sequence="25"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_projects" name="Project Reports"
+                  parent="menu_grant_reporting" action="action_grant_project" sequence="30"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_amendments" name="Amendment Reports"
+                  parent="menu_grant_reporting" action="action_amendment" sequence="40"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_disbursements" name="Disbursement Reports"
+                  parent="menu_grant_reporting" action="action_disbursement" sequence="50"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_compliance" name="Compliance Reports"
+                  parent="menu_grant_reporting" action="action_compliance" sequence="60"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_documents" name="Document Reports"
+                  parent="menu_grant_reporting" action="action_document" sequence="70"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_contacts" name="Donor Contact Reports"
+                  parent="menu_grant_reporting" action="action_contact" sequence="80"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_schedules" name="Reporting Schedule Reports"
+                  parent="menu_grant_reporting" action="action_reporting_schedule" sequence="90"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+
+    </data>
+</odoo>
