@@ -25,6 +25,7 @@ Manages the complete lifecycle of donor-funded grants:
     'license': 'LGPL-3',
     'depends': [
         'base',
+        'web',
         'mail',
         'contacts',
         'documents',
@@ -44,6 +45,7 @@ Manages the complete lifecycle of donor-funded grants:
         'data/disbursement_type_data.xml',
         'data/mail_template.xml',
         'data/cron.xml',
+        'data/dashboard_data.xml',
         
         # Wizard Views (must load before views that reference wizard action IDs)
         'wizard/grant_amendment_wizard.xml',
@@ -51,6 +53,8 @@ Manages the complete lifecycle of donor-funded grants:
         
         # Views
         'views/grant_views.xml',
+        'views/dashboard_views.xml',
+        'views/subgrant_views.xml',
         'views/donor_views.xml',
         'views/donor_category_views.xml',
         'views/grant_project_views.xml',
@@ -60,6 +64,7 @@ Manages the complete lifecycle of donor-funded grants:
         'views/grant_compliance_views.xml',
         'views/reporting_schedule_views.xml',
         'views/grant_disbursement_views.xml',
+        'views/subgrant_transactions_views.xml',
         'views/grant_disbursement_type_views.xml',
         
         # Reports
@@ -78,5 +83,12 @@ Manages the complete lifecycle of donor-funded grants:
     'installable': True,
     'application': True,
     'auto_install': False,
+    'assets': {
+        'web.assets_backend': [
+            'ngo_grant/static/src/js/ngo_grant_dashboard.js',
+            'ngo_grant/static/src/xml/ngo_grant_dashboard.xml',
+            'ngo_grant/static/src/css/ngo_grant_dashboard.css',
+        ],
+    },
     "images": ["static/description/icon.png"],
 }

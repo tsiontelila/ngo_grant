@@ -61,6 +61,20 @@ class NgoGrant(models.Model):
         tracking=True,
         help='Grant disbursement transactions',
     )
+
+    subgrant_ids = fields.One2many('ngo.subgrant', 'grant_id', string='Subgrants')
+    subgrant_amount = fields.Monetary(string='Subgrant Amount', currency_field='currency_id', compute='_compute_subgrant_amount', store=True)
+    subgrant_count = fields.Integer(string='Subgrant Count', compute='_compute_subgrant_count')
+
+    @api.depends('subgrant_ids')
+    def _compute_subgrant_count(self):
+        for grant in self:
+            grant.subgrant_count = len(grant.subgrant_ids)
+
+    @api.depends('subgrant_ids.approved_amount')
+    def _compute_subgrant_amount(self):
+        for grant in self:
+            grant.subgrant_amount = sum(grant.subgrant_ids.mapped('approved_amount'))
     
     # Computed donor reference for display
     donor_reference = fields.Char(
@@ -511,6 +525,13 @@ class NgoGrant(models.Model):
         """View projects for this grant."""
         self.ensure_one()
         action = self.env.ref('ngo_grant.action_grant_project').read()[0]
+        action['domain'] = [('grant_id', '=', self.id)]
+        action['context'] = {'default_grant_id': self.id}
+        return action
+
+    def action_view_subgrants(self):
+        self.ensure_one()
+        action = self.env.ref('ngo_grant.action_subgrant').read()[0]
         action['domain'] = [('grant_id', '=', self.id)]
         action['context'] = {'default_grant_id': self.id}
         return action

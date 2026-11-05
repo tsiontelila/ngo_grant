@@ -1,0 +1,1400 @@
+/* ============================================================
+   NGO GRANT DASHBOARD
+   Professional analytics dashboard
+   ============================================================ */
+
+
+/* ============================================================
+   ROOT DASHBOARD
+   ============================================================ */
+
+.o_ngo_grant_dashboard {
+    min-height: 100vh;
+    width: 100%;
+    padding: 24px 28px 40px;
+    background: #f4f5f7;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.ngo-dashboard-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 22px;
+}
+
+.ngo-dashboard-header-left {
+    min-width: 0;
+}
+
+.ngo-dashboard-title-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.ngo-dashboard-title-icon {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background: #714b67;
+    color: #ffffff;
+
+    font-size: 23px;
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+}
+
+.ngo-dashboard-header h1 {
+    margin: 0;
+
+    color: #252525;
+
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.ngo-dashboard-header p {
+    margin: 5px 0 0;
+
+    color: #777777;
+
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.ngo-dashboard-header-right {
+    flex-shrink: 0;
+}
+
+.ngo-dashboard-refresh {
+    border: 1px solid #d9d9d9 !important;
+    background: #ffffff !important;
+    color: #4b4b4b !important;
+
+    border-radius: 8px !important;
+
+    padding: 9px 15px !important;
+
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.05);
+
+    transition:
+        box-shadow 0.2s ease,
+        transform 0.2s ease,
+        background 0.2s ease;
+}
+
+.ngo-dashboard-refresh:hover {
+    background: #fafafa !important;
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.09);
+
+    transform: translateY(-1px);
+}
+
+
+/* ============================================================
+   SUMMARY STRIP
+   ============================================================ */
+
+.ngo-dashboard-summary {
+    width: 100%;
+
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    gap: 14px;
+
+    margin-bottom: 20px;
+}
+
+.ngo-summary-item {
+    min-height: 82px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 14px 17px;
+
+    background: #ffffff;
+
+    border: 1px solid #e4e5e7;
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.04);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.ngo-summary-item:hover {
+    transform: translateY(-2px);
+
+    box-shadow: 0 7px 18px rgba(0, 0, 0, 0.09);
+}
+
+.ngo-summary-icon {
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    font-size: 19px;
+
+    color: #ffffff;
+}
+
+.ngo-summary-item--purple .ngo-summary-icon {
+    background: #714b67;
+}
+
+.ngo-summary-item--teal .ngo-summary-icon {
+    background: #017e84;
+}
+
+.ngo-summary-item--blue .ngo-summary-icon {
+    background: #5b8ff9;
+}
+
+.ngo-summary-item--green .ngo-summary-icon {
+    background: #00a09a;
+}
+
+.ngo-summary-content {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.ngo-summary-label {
+    color: #777777;
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.ngo-summary-content strong {
+    margin-top: 2px;
+
+    color: #252525;
+
+    font-size: 24px;
+    font-weight: 700;
+
+    line-height: 1.2;
+}
+
+
+/* ============================================================
+   DASHBOARD GRID
+   ============================================================ */
+
+.ngo-dashboard-grid {
+    width: 100%;
+
+    display: grid;
+
+    /*
+       12-column layout allows different panel widths.
+       Large panel = 6 columns
+       Medium panel = 4 columns
+       Small panel = 3 columns
+    */
+
+    grid-template-columns:
+        repeat(12, minmax(0, 1fr));
+
+    gap: 16px;
+
+    align-items: stretch;
+}
+
+
+/* ============================================================
+   PANEL BASE
+   ============================================================ */
+
+.ngo-dashboard-panel {
+    min-width: 0;
+    min-height: 330px;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #ffffff;
+
+    border: 1px solid #e1e3e5;
+    border-radius: 10px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.045);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.ngo-dashboard-panel:hover {
+    box-shadow:
+        0 7px 20px rgba(0, 0, 0, 0.08);
+}
+
+
+/* ============================================================
+   PANEL WIDTHS
+   ============================================================ */
+
+/*
+   First row:
+   Grants   = 6 columns
+   Donors   = 6 columns
+
+   Second row:
+   Projects       = 4
+   Disbursements  = 4
+   Compliance     = 4
+
+   Third row:
+   Reporting      = 4
+   Amendments     = 4
+   Documents      = 4
+*/
+
+.ngo-dashboard-panel--large {
+    grid-column: span 6;
+}
+
+.ngo-dashboard-panel--medium {
+    grid-column: span 4;
+}
+
+.ngo-dashboard-panel--small {
+    grid-column: span 4;
+}
+
+
+/* ============================================================
+   PANEL HEADER
+   ============================================================ */
+
+.ngo-panel-header {
+    min-height: 67px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 12px 15px;
+
+    border-bottom: 1px solid #eeeeee;
+
+    background: #ffffff;
+}
+
+.ngo-panel-title {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+}
+
+.ngo-panel-icon {
+    width: 37px;
+    height: 37px;
+    min-width: 37px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    color: #ffffff;
+
+    font-size: 15px;
+}
+
+.ngo-panel-title h2 {
+    margin: 0;
+
+    color: #292929;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    line-height: 1.3;
+}
+
+.ngo-panel-title span {
+    display: block;
+
+    margin-top: 2px;
+
+    color: #8a8a8a;
+
+    font-size: 11px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ngo-panel-open {
+    width: 31px;
+    height: 31px;
+    min-width: 31px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: #f5f5f5;
+
+    color: #777777;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.ngo-panel-open:hover {
+    background: var(--panel-color);
+    color: #ffffff;
+}
+
+
+/* ============================================================
+   PANEL BODY
+   ============================================================ */
+
+.ngo-panel-body {
+    flex: 1;
+
+    min-height: 0;
+
+    padding: 15px 17px;
+
+    overflow: hidden;
+}
+
+.ngo-panel-total {
+    display: flex;
+    align-items: baseline;
+
+    gap: 8px;
+
+    margin-bottom: 10px;
+}
+
+.ngo-panel-total span {
+    color: #888888;
+
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.ngo-panel-total strong {
+    color: #282828;
+
+    font-size: 25px;
+    font-weight: 700;
+
+    line-height: 1;
+}
+
+
+/* ============================================================
+   PIE / DONUT
+   ============================================================ */
+
+.ngo-pie-layout {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 20px;
+
+    min-height: 195px;
+}
+
+.ngo-donut-wrapper {
+    flex: 0 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ngo-donut {
+    width: 175px;
+    height: 175px;
+
+    position: relative;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+.ngo-donut::after {
+    content: "";
+
+    position: absolute;
+
+    width: 104px;
+    height: 104px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 1px 5px rgba(0, 0, 0, 0.03);
+}
+
+
+/* Pie chart: full solid circle without the donut center cutout. */
+.ngo-donut.ngo-pie::after {
+    display: none;
+}
+
+.ngo-donut.ngo-pie {
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.06);
+}
+
+.ngo-donut-center {
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.ngo-donut-center strong {
+    color: #292929;
+
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.ngo-donut-center span {
+    color: #888888;
+
+    font-size: 10px;
+}
+
+.ngo-legend {
+    flex: 1;
+
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+
+    max-height: 180px;
+
+    overflow-y: auto;
+
+    padding-right: 3px;
+}
+
+.ngo-legend-item {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 5px 4px;
+
+    border: 0;
+    border-radius: 5px;
+
+    background: transparent;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    color: #555555;
+
+    transition: background 0.15s ease;
+}
+
+.ngo-legend-item:hover {
+    background: #f6f6f6;
+}
+
+.ngo-legend-dot {
+    width: 9px;
+    height: 9px;
+    min-width: 9px;
+
+    border-radius: 50%;
+}
+
+.ngo-legend-label {
+    flex: 1;
+
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 11px;
+}
+
+.ngo-legend-item strong {
+    color: #333333;
+
+    font-size: 11px;
+}
+
+
+/* ============================================================
+   HORIZONTAL BAR CHART
+   ============================================================ */
+
+.ngo-horizontal-chart {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 13px;
+
+    padding-top: 4px;
+
+    max-height: 235px;
+
+    overflow-y: auto;
+}
+
+.ngo-horizontal-row {
+    width: 100%;
+
+    display: block;
+
+    border: 0;
+
+    padding: 0;
+
+    background: transparent;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.ngo-horizontal-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-bottom: 5px;
+
+    color: #666666;
+
+    font-size: 11px;
+}
+
+.ngo-horizontal-label span {
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ngo-horizontal-label strong {
+    flex-shrink: 0;
+
+    color: #333333;
+
+    font-size: 11px;
+}
+
+.ngo-horizontal-track {
+    width: 100%;
+    height: 12px;
+
+    border-radius: 3px;
+
+    background: #eeeeee;
+
+    overflow: hidden;
+}
+
+.ngo-horizontal-fill {
+    height: 100%;
+
+    min-width: 2px;
+
+    border-radius: 3px;
+
+    transition:
+        width 0.4s ease;
+
+    opacity: 0.9;
+}
+
+.ngo-horizontal-row:hover .ngo-horizontal-fill {
+    opacity: 1;
+}
+
+
+/* ============================================================
+   VERTICAL BAR CHART
+   ============================================================ */
+
+.ngo-vertical-chart {
+    width: 100%;
+
+    min-height: 205px;
+
+    display: flex;
+    align-items: flex-end;
+
+    justify-content: space-around;
+
+    gap: 10px;
+
+    padding: 10px 4px 0;
+
+    border-bottom: 1px solid #eeeeee;
+}
+
+.ngo-vertical-column {
+    flex: 1;
+
+    min-width: 35px;
+
+    height: 195px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 5px;
+
+    padding: 0;
+
+    border: 0;
+
+    background: transparent;
+
+    cursor: pointer;
+}
+
+.ngo-vertical-value {
+    min-height: 14px;
+
+    color: #555555;
+
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.ngo-vertical-track {
+    width: 42px;
+
+    flex: 1;
+
+    min-height: 15px;
+
+    display: flex;
+    align-items: flex-end;
+
+    justify-content: center;
+}
+
+.ngo-vertical-fill {
+    width: 100%;
+
+    min-height: 3px;
+
+    border-radius: 4px 4px 0 0;
+
+    transition:
+        height 0.35s ease,
+        opacity 0.2s ease;
+
+    opacity: 0.85;
+}
+
+.ngo-vertical-column:hover .ngo-vertical-fill {
+    opacity: 1;
+}
+
+.ngo-vertical-label {
+    width: 100%;
+
+    min-height: 28px;
+
+    color: #777777;
+
+    font-size: 9px;
+
+    line-height: 1.2;
+
+    text-align: center;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+/* ============================================================
+   STATUS / PROGRESS CHART
+   ============================================================ */
+
+.ngo-status-chart {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 13px;
+
+    max-height: 230px;
+
+    overflow-y: auto;
+}
+
+.ngo-status-row {
+    width: 100%;
+
+    display: block;
+
+    padding: 0;
+
+    border: 0;
+
+    background: transparent;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.ngo-status-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-bottom: 5px;
+
+    color: #666666;
+
+    font-size: 11px;
+}
+
+.ngo-status-top span {
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.ngo-status-top strong {
+    color: #333333;
+
+    font-size: 11px;
+}
+
+.ngo-status-track {
+    width: 100%;
+
+    height: 9px;
+
+    border-radius: 5px;
+
+    background: #eeeeee;
+
+    overflow: hidden;
+}
+
+.ngo-status-fill {
+    height: 100%;
+
+    min-width: 2px;
+
+    border-radius: 5px;
+
+    transition: width 0.4s ease;
+}
+
+.ngo-status-percent {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #999999;
+
+    font-size: 9px;
+
+    text-align: right;
+}
+
+
+/* ============================================================
+   PANEL FOOTER
+   ============================================================ */
+
+.ngo-panel-footer {
+    display: flex;
+    justify-content: flex-end;
+
+    padding: 9px 15px;
+
+    border-top: 1px solid #eeeeee;
+
+    background: #fafafa;
+}
+
+.ngo-view-records {
+    border: 0;
+
+    padding: 3px 0;
+
+    background: transparent;
+
+    color: var(--panel-color);
+
+    font-size: 11px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.ngo-view-records i {
+    margin-left: 4px;
+
+    transition:
+        transform 0.2s ease;
+}
+
+.ngo-view-records:hover i {
+    transform: translateX(3px);
+}
+
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+
+.ngo-dashboard-loading {
+    min-height: 400px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 12px;
+
+    color: #777777;
+}
+
+.ngo-dashboard-loading-spinner {
+    width: 50px;
+    height: 50px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    color: #714b67;
+
+    font-size: 24px;
+
+    box-shadow:
+        0 3px 12px rgba(0, 0, 0, 0.07);
+}
+
+.ngo-dashboard-loading span {
+    font-size: 13px;
+}
+
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
+.ngo-dashboard-empty {
+    min-height: 420px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+
+    text-align: center;
+}
+
+.ngo-dashboard-empty-icon {
+    width: 70px;
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 15px;
+
+    border-radius: 50%;
+
+    background: #eeeeee;
+
+    color: #888888;
+
+    font-size: 28px;
+}
+
+.ngo-dashboard-empty h3 {
+    margin: 0 0 7px;
+
+    color: #444444;
+
+    font-size: 18px;
+}
+
+.ngo-dashboard-empty p {
+    max-width: 450px;
+
+    margin: 0;
+
+    color: #888888;
+
+    font-size: 12px;
+}
+
+
+/* ============================================================
+   SCROLLBARS
+   ============================================================ */
+
+.ngo-dashboard-grid ::-webkit-scrollbar,
+.ngo-dashboard-panel ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.ngo-dashboard-grid ::-webkit-scrollbar-track,
+.ngo-dashboard-panel ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.ngo-dashboard-grid ::-webkit-scrollbar-thumb,
+.ngo-dashboard-panel ::-webkit-scrollbar-thumb {
+    background: #d2d2d2;
+
+    border-radius: 5px;
+}
+
+.ngo-dashboard-grid ::-webkit-scrollbar-thumb:hover,
+.ngo-dashboard-panel ::-webkit-scrollbar-thumb:hover {
+    background: #aaaaaa;
+}
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 1200px) {
+
+    .o_ngo_grant_dashboard {
+        padding: 20px;
+    }
+
+    .ngo-dashboard-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ngo-dashboard-panel--large,
+    .ngo-dashboard-panel--medium,
+    .ngo-dashboard-panel--small {
+        grid-column: span 6;
+    }
+
+}
+
+
+/* ============================================================
+   SMALL TABLET
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    .ngo-dashboard-grid {
+        grid-template-columns:
+            repeat(6, minmax(0, 1fr));
+    }
+
+    .ngo-dashboard-panel--large,
+    .ngo-dashboard-panel--medium,
+    .ngo-dashboard-panel--small {
+        grid-column: span 6;
+    }
+
+    .ngo-dashboard-header {
+        align-items: flex-start;
+    }
+
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+    .o_ngo_grant_dashboard {
+        padding: 15px;
+    }
+
+    .ngo-dashboard-header {
+        flex-direction: column;
+    }
+
+    .ngo-dashboard-header-right {
+        width: 100%;
+    }
+
+    .ngo-dashboard-refresh {
+        width: 100%;
+    }
+
+    .ngo-dashboard-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .ngo-dashboard-grid {
+        grid-template-columns: 1fr;
+
+        gap: 12px;
+    }
+
+    .ngo-dashboard-panel--large,
+    .ngo-dashboard-panel--medium,
+    .ngo-dashboard-panel--small {
+        grid-column: span 1;
+    }
+
+    .ngo-dashboard-header h1 {
+        font-size: 21px;
+    }
+
+    .ngo-dashboard-title-icon {
+        width: 45px;
+        height: 45px;
+        min-width: 45px;
+    }
+
+    .ngo-pie-layout {
+        flex-direction: column;
+
+        justify-content: center;
+    }
+
+    .ngo-donut {
+        width: 145px;
+        height: 145px;
+    }
+
+    .ngo-donut::after {
+        width: 85px;
+        height: 85px;
+    }
+
+    .ngo-legend {
+        width: 100%;
+        max-height: 120px;
+    }
+
+}
+
+
+/* ============================================================
+   ACCESSIBILITY / FOCUS
+   ============================================================ */
+
+.ngo-dashboard-panel button:focus-visible,
+.ngo-summary-item:focus-visible,
+.ngo-dashboard-refresh:focus-visible {
+    outline: 2px solid #714b67;
+
+    outline-offset: 2px;
+}
+
+
+/* ============================================================
+   REDUCE MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .ngo-dashboard-panel,
+    .ngo-summary-item,
+    .ngo-dashboard-refresh,
+    .ngo-horizontal-fill,
+    .ngo-vertical-fill,
+    .ngo-status-fill,
+    .ngo-view-records i {
+        transition: none;
+    }
+
+}
+/* ============================================================
+   FINAL LAYOUT OVERRIDES
+   The Odoo action area must give the dashboard its own
+   scrolling surface. These rules intentionally come last.
+   ============================================================ */
+
+.o_action_manager .o_action:has(.o_ngo_grant_dashboard) {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.o_action_manager .o_action:has(.o_ngo_grant_dashboard) .o_content {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.o_action_manager .o_action:has(.o_ngo_grant_dashboard) .o_control_panel {
+    display: none !important;
+}
+
+.o_ngo_grant_dashboard {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+.o_ngo_grant_dashboard .ngo-dashboard-grid {
+    padding-bottom: 28px;
+}
+
+.o_ngo_grant_dashboard .ngo-dashboard-panel {
+    min-height: 350px;
+}
+
+.o_ngo_grant_dashboard button {
+    font-family: inherit;
+}
+
+.o_ngo_grant_dashboard button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.o_ngo_grant_dashboard .ngo-dashboard-refresh .fa-spin {
+    margin-right: 4px;
+}
+
+.ngo-dashboard-filters {
+    display: grid;
+    grid-template-columns: minmax(150px, 0.8fr) minmax(150px, 0.8fr) minmax(220px, 1.4fr) minmax(220px, 1.4fr) minmax(120px, 0.7fr);
+    gap: 16px;
+    align-items: end;
+    margin: 0 0 24px;
+    padding: 18px 20px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.ngo-dashboard-filters label {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0;
+    color: #667085;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.ngo-dashboard-filters select {
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 1px solid #e1e5ea;
+    border-radius: 8px;
+    background: #fff;
+    color: #344054;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    color-scheme: light;
+}
+
+.ngo-dashboard-filters select option {
+    background-color: #fff;
+    color: #344054;
+}
+
+.ngo-dashboard-reporting-currency {
+    padding: 4px 0;
+    color: #8a8f98;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Odoo can enable dark mode on the web client independently of the OS theme. */
+:is(html, body, .o_web_client).o_dark .o_ngo_grant_dashboard .ngo-dashboard-filters,
+:is(html, body, .o_web_client)[data-color-scheme="dark"] .o_ngo_grant_dashboard .ngo-dashboard-filters,
+[data-color-scheme="dark"] .o_ngo_grant_dashboard .ngo-dashboard-filters,
+.o_dark .o_ngo_grant_dashboard .ngo-dashboard-filters {
+    background: #20232b;
+    border-color: #3c414d;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+}
+
+:is(html, body, .o_web_client).o_dark .ngo-dashboard-filters label,
+:is(html, body, .o_web_client)[data-color-scheme="dark"] .ngo-dashboard-filters label,
+[data-color-scheme="dark"] .ngo-dashboard-filters label,
+.o_dark .ngo-dashboard-filters label {
+    color: #cbd5e1;
+}
+
+:is(html, body, .o_web_client).o_dark .ngo-dashboard-filters select,
+:is(html, body, .o_web_client)[data-color-scheme="dark"] .ngo-dashboard-filters select,
+[data-color-scheme="dark"] .ngo-dashboard-filters select,
+.o_dark .ngo-dashboard-filters select {
+    color-scheme: dark;
+    background-color: #292d36;
+    border-color: #4b5261;
+    color: #f1f5f9;
+}
+
+:is(html, body, .o_web_client).o_dark .ngo-dashboard-filters select option,
+:is(html, body, .o_web_client)[data-color-scheme="dark"] .ngo-dashboard-filters select option,
+[data-color-scheme="dark"] .ngo-dashboard-filters select option,
+.o_dark .ngo-dashboard-filters select option {
+    background-color: #292d36;
+    color: #f1f5f9;
+}
+
+:is(html, body, .o_web_client).o_dark .ngo-dashboard-reporting-currency,
+:is(html, body, .o_web_client)[data-color-scheme="dark"] .ngo-dashboard-reporting-currency,
+[data-color-scheme="dark"] .ngo-dashboard-reporting-currency,
+.o_dark .ngo-dashboard-reporting-currency {
+    color: #aeb7c4;
+}
+
+@media (max-width: 900px) {
+    .ngo-dashboard-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .ngo-dashboard-filters {
+        grid-template-columns: 1fr;
+    }
+}
+
+.o_ngo_grant_dashboard.o_dashboard_readonly .ngo-summary-item {
+    pointer-events: none;
+    cursor: default;
+}
+
+.o_ngo_grant_dashboard .ngo-summary-item,
+.o_ngo_grant_dashboard .ngo-legend-item,
+.o_ngo_grant_dashboard .ngo-horizontal-row,
+.o_ngo_grant_dashboard .ngo-vertical-column,
+.o_ngo_grant_dashboard .ngo-status-row,
+.o_ngo_grant_dashboard .ngo-view-records,
+.o_ngo_grant_dashboard .ngo-panel-open {
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 900px) {
+    .o_ngo_grant_dashboard {
+        height: 100% !important;
+    }
+}

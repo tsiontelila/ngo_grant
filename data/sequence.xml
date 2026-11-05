@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
+        <record id="seq_subgrant_amendment" model="ir.sequence">
+            <field name="name">Subgrant Amendment Number</field>
+            <field name="code">ngo.subgrant.amendment</field>
+            <field name="prefix">SUBAMD-</field>
+            <field name="padding">5</field>
+        </record>
+        <record id="seq_subgrant_disbursement" model="ir.sequence">
+            <field name="name">Subgrant Disbursement Reference</field>
+            <field name="code">ngo.subgrant.disbursement</field>
+            <field name="prefix">SUBDISB-</field>
+            <field name="padding">5</field>
+        </record>
         
         <!-- Grant Sequence -->
         <record id="seq_grant" model="ir.sequence">

@@ -58,6 +58,7 @@
                                 <field name="approved_amount" readonly="state != 'draft'"/>
                                 <field name="total_contributed_amount" readonly="1"/>
                                 <field name="remaining_contribution_amount" readonly="1"/>
+                                <field name="subgrant_amount" readonly="1"/>
                             </group>
                             <group>
                                 <field name="disbursed_amount" readonly="1"/>
@@ -98,6 +99,17 @@
                                                     </div>
                                                     <h5 class="card-title mb-2">Projects</h5>
                                                     <h2 class="card-text mb-0"><field name="project_count" readonly="1"/></h2>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <div class="col-12 col-md-6 col-lg-3 mb-3">
+                                        <button name="action_view_subgrants" type="object" class="btn btn-link w-100 p-0">
+                                            <div class="card o_dashboard_graph h-100 border-0 shadow-sm" style="border-radius: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                                                <div class="card-body text-center py-4">
+                                                    <div class="mb-2"><i class="fa fa-sitemap fa-2x text-primary"/></div>
+                                                    <h5 class="card-title mb-2">Subgrants</h5>
+                                                    <h2 class="card-text mb-0"><field name="subgrant_count" readonly="1"/></h2>
                                                 </div>
                                             </div>
                                         </button>
@@ -178,6 +190,21 @@
                                         <field name="allocation_amount"/>
                                         <field name="allocation_percentage"/>
                                         <field name="is_primary_funding"/>
+                                        <field name="state"/>
+                                    </list>
+                                </field>
+                            </page>
+
+                            <page string="Subgrants">
+                                <field name="subgrant_ids">
+                                    <list>
+                                        <field name="grant_number"/>
+                                        <field name="grant_name"/>
+                                        <field name="approved_amount"/>
+                                        <field name="disbursed_amount"/>
+                                        <field name="remaining_amount"/>
+                                        <field name="start_date"/>
+                                        <field name="end_date"/>
                                         <field name="state"/>
                                     </list>
                                 </field>

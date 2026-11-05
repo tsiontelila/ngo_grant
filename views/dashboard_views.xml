@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="action_ngo_grant_dashboard" model="ir.actions.client">
+            <field name="name">NGO Grant Dashboard</field>
+            <field name="tag">ngo_grant_dashboard</field>
+        </record>
+
+        <menuitem id="menu_ngo_grant_dashboard"
+                  name="Dashboard"
+                  parent="menu_grant_root"
+                  action="action_ngo_grant_dashboard"
+                  sequence="1"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+    </data>
+</odoo>

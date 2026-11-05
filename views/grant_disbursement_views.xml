@@ -117,6 +117,13 @@
             </field>
         </record>
 
+        <record id="action_subgrant_disbursement" model="ir.actions.act_window">
+            <field name="name">Subgrant Disbursements</field>
+            <field name="res_model">ngo.subgrant.disbursement</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_subgrant_disbursements" name="Subgrant Disbursements" parent="ngo_grant.menu_subgrant" action="action_subgrant_disbursement" sequence="30" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+
         <!-- Disbursement Menu -->
         <menuitem id="menu_disbursement" name="Disbursements" parent="menu_grant_management" action="action_disbursement" sequence="40" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
 

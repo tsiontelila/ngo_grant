@@ -1,0 +1,64 @@
+<odoo>
+    <data>
+        <record id="view_subgrant_list" model="ir.ui.view">
+            <field name="name">ngo.subgrant.list</field>
+            <field name="model">ngo.subgrant</field>
+            <field name="arch" type="xml">
+                <list><field name="grant_number"/><field name="grant_name"/><field name="grant_id"/><field name="approved_amount"/><field name="disbursed_amount"/><field name="remaining_amount"/><field name="start_date"/><field name="end_date"/><field name="state"/></list>
+            </field>
+        </record>
+        <record id="view_subgrant_form" model="ir.ui.view">
+            <field name="name">ngo.subgrant.form</field>
+            <field name="model">ngo.subgrant</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_submit" string="Submit" type="object" invisible="state != 'draft'" class="btn-primary"/>
+                        <button name="action_approve" string="Approve" type="object" invisible="state != 'submitted'" class="btn-primary"/>
+                        <button name="action_activate" string="Activate" type="object" invisible="state != 'approved'" class="btn-primary"/>
+                        <button name="action_close" string="Close" type="object" invisible="state not in ['active', 'suspended', 'completed']"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,active,completed,closed"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title"><h1><field name="grant_number" placeholder="Subgrant Number"/></h1><h2><field name="grant_name" placeholder="Subgrant Name"/></h2></div>
+                        <group><group><field name="grant_id"/><field name="short_name"/><field name="currency_id"/><field name="approved_amount"/><field name="disbursed_amount" readonly="1"/><field name="remaining_amount" readonly="1"/></group>
+                        <group><field name="funding_type_id"/><field name="sector_id"/><field name="program_area_id" domain="[('sector_id', '=', sector_id)]"/><field name="start_date"/><field name="end_date"/><field name="agreement_date"/><field name="close_date"/></group></group>
+                        <field name="description"/>
+                        <notebook>
+                            <page string="Amendments"><button name="action_view_amendments" type="object" string="Manage Amendments" class="btn-secondary"/><field name="amendment_ids" readonly="1"><list><field name="amendment_number"/><field name="amendment_name"/><field name="amendment_type"/><field name="amendment_date"/><field name="state"/></list></field></page>
+                            <page string="Disbursements"><button name="action_view_disbursements" type="object" string="Manage Disbursements" class="btn-secondary"/><field name="disbursement_ids" readonly="1"><list><field name="name"/><field name="amount"/><field name="disbursement_date"/><field name="state"/></list></field></page>
+                            <page string="Compliance"><button name="action_view_compliance" type="object" string="Manage Compliance" class="btn-secondary"/><field name="compliance_ids" readonly="1"><list><field name="name"/><field name="compliance_type"/><field name="due_date"/><field name="state"/></list></field></page>
+                            <page string="Subgrant Donors">
+                                <p class="text-muted">Add the donors and contribution allocations for this subgrant. These allocations belong to this subgrant and are separate from the parent grant's donor list.</p>
+                                <field name="donor_line_ids" readonly="state not in ['draft', 'submitted']">
+                                    <list editable="bottom">
+                                        <field name="donor_id"/>
+                                        <field name="lead_donor"/>
+                                        <field name="contribution_amount"/>
+                                        <field name="contribution_percentage"/>
+                                        <field name="donor_reference"/>
+                                        <field name="agreement_reference"/>
+                                        <field name="state"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Documents">
+                                <field name="document_ids">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="document_type"/>
+                                        <field name="document_date"/>
+                                        <field name="file_name"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet><chatter/>
+                </form>
+            </field>
+        </record>
+        <record id="action_subgrant" model="ir.actions.act_window"><field name="name">Subgrants</field><field name="res_model">ngo.subgrant</field><field name="view_mode">list,form</field></record>
+        <menuitem id="menu_subgrant" name="Subgrants" parent="ngo_grant.menu_grant_root" sequence="25" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+        <menuitem id="menu_subgrant_all" name="All Subgrants" parent="menu_subgrant" action="action_subgrant" sequence="10" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
+    </data>
+</odoo>

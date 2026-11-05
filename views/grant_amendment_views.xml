@@ -116,6 +116,13 @@
             <field name="res_model">ngo.grant.amendment</field>
             <field name="view_mode">list,kanban,form,pivot,graph</field>
         </record>
+
+        <record id="action_subgrant_amendment" model="ir.actions.act_window">
+            <field name="name">Subgrant Amendments</field>
+            <field name="res_model">ngo.subgrant.amendment</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_subgrant_amendments" name="Subgrant Amendments" parent="ngo_grant.menu_subgrant" action="action_subgrant_amendment" sequence="20" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>
         
         <!-- Amendment Menu -->
         <menuitem id="menu_amendment" name="Amendments" parent="menu_grant_management" action="action_amendment" sequence="30" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_user,group_ngo_grant_read"/>

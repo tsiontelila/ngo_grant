@@ -101,14 +101,33 @@ class GrantExportWizard(models.TransientModel):
                 {'Field': 'Total Contributed', 'Value': grant.total_contributed_amount},
                 {'Field': 'Disbursed Amount', 'Value': grant.disbursed_amount},
                 {'Field': 'Remaining Amount', 'Value': grant.remaining_amount},
+                {'Field': 'Subgrant Count', 'Value': len(grant.subgrant_ids)},
+                {'Field': 'Total Subgrant Amount', 'Value': grant.subgrant_amount},
                 {'Field': 'Currency', 'Value': grant.currency_id.name},
             ]
+            for subgrant in grant.subgrant_ids:
+                rows.extend([
+                    {'Field': 'Subgrant: %s' % subgrant.grant_number, 'Value': subgrant.grant_name},
+                    {'Field': 'Subgrant Approved Amount: %s' % subgrant.grant_number, 'Value': subgrant.approved_amount},
+                    {'Field': 'Subgrant Disbursed Amount: %s' % subgrant.grant_number, 'Value': subgrant.disbursed_amount},
+                    {'Field': 'Subgrant Remaining Amount: %s' % subgrant.grant_number, 'Value': subgrant.remaining_amount},
+                ])
 
         elif rt == 'income_statement':
             rows = [
                 {'Description': 'Total Grant Approved', 'Amount': grant.approved_amount, 'Currency': grant.currency_id.name},
                 {'Description': 'Total Donor Contributions', 'Amount': grant.total_contributed_amount, 'Currency': grant.currency_id.name},
+                {'Description': 'Total Subgrant Allocations', 'Amount': grant.subgrant_amount, 'Currency': grant.currency_id.name},
             ]
+            for subgrant in grant.subgrant_ids:
+                rows.append({
+                    'Description': 'Subgrant: %s - %s' % (subgrant.grant_number, subgrant.grant_name),
+                    'Amount': subgrant.approved_amount,
+                    'Currency': subgrant.currency_id.name,
+                    'Disbursed': subgrant.disbursed_amount,
+                    'Remaining': subgrant.remaining_amount,
+                    'Status': subgrant.state,
+                })
             if self.include_budget_periods:
                 for bp in grant.budget_period_ids:
                     rows.append({
@@ -141,6 +160,17 @@ class GrantExportWizard(models.TransientModel):
                     'Currency': grant.currency_id.name,
                     'Status': d.state,
                 })
+            for subgrant in grant.subgrant_ids:
+                for d in subgrant.disbursement_ids:
+                    rows.append({
+                        'Type': 'SUBGRANT OUTFLOW',
+                        'Reference': '%s / %s' % (subgrant.grant_number, d.name),
+                        'Date': str(d.disbursement_date),
+                        'Disbursement Type': 'Subgrant Disbursement',
+                        'Amount': -d.amount,
+                        'Currency': d.currency_id.name,
+                        'Status': d.state,
+                    })
             rows.append({
                 'Type': 'NET POSITION',
                 'Reference': 'Remaining Balance',
@@ -160,6 +190,19 @@ class GrantExportWizard(models.TransientModel):
                     'Status': dl.state,
                     'Currency': grant.currency_id.name,
                 })
+            for subgrant in grant.subgrant_ids:
+                for line in subgrant.donor_line_ids:
+                    rows.append({
+                        'Donor Name': line.donor_id.name if line.donor_id else '',
+                        'Subgrant': '%s - %s' % (subgrant.grant_number, subgrant.grant_name),
+                        'Lead Donor': line.lead_donor,
+                        'Donor Reference': line.donor_reference or '',
+                        'Agreement Reference': line.agreement_reference or '',
+                        'Contribution Amount': line.contribution_amount,
+                        'Contribution %': line.contribution_percentage,
+                        'Status': line.state,
+                        'Currency': line.currency_id.name,
+                    })
 
         elif rt == 'budget_vs_actual':
             for bp in grant.budget_period_ids:
@@ -194,6 +237,7 @@ class GrantExportWizard(models.TransientModel):
                 {'Field': 'Approved Amount', 'Value': grant.approved_amount},
                 {'Field': 'Disbursed Amount', 'Value': grant.disbursed_amount},
                 {'Field': 'Net Receivable Balance', 'Value': grant.remaining_amount},
+                {'Field': 'Total Subgrant Allocations', 'Value': grant.subgrant_amount},
                 {'Field': 'Currency', 'Value': grant.currency_id.name},
             ]
         return rows

@@ -15,8 +15,43 @@
                     <field name="total_contributed_amount" type="measure"/>
                     <field name="remaining_contribution_amount" type="measure"/>
                     <field name="disbursed_amount" type="measure"/>
+                    <field name="subgrant_amount" type="measure"/>
                 </pivot>
             </field>
+        </record>
+
+        <record id="view_subgrant_analysis_pivot" model="ir.ui.view">
+            <field name="name">ngo.subgrant.analysis.pivot</field>
+            <field name="model">ngo.subgrant</field>
+            <field name="arch" type="xml">
+                <pivot string="Subgrant Analysis">
+                    <field name="grant_id" type="row"/>
+                    <field name="sector_id" type="row"/>
+                    <field name="program_area_id" type="row"/>
+                    <field name="state" type="col"/>
+                    <field name="approved_amount" type="measure"/>
+                    <field name="disbursed_amount" type="measure"/>
+                    <field name="remaining_amount" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="view_subgrant_analysis_graph" model="ir.ui.view">
+            <field name="name">ngo.subgrant.analysis.graph</field>
+            <field name="model">ngo.subgrant</field>
+            <field name="arch" type="xml">
+                <graph string="Subgrant Analysis" type="bar">
+                    <field name="grant_id"/>
+                    <field name="approved_amount" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <record id="action_subgrant_analysis" model="ir.actions.act_window">
+            <field name="name">Subgrant Reports</field>
+            <field name="res_model">ngo.subgrant</field>
+            <field name="view_mode">pivot,graph,list</field>
+            <field name="view_id" ref="view_subgrant_analysis_pivot"/>
         </record>
 
         <record id="view_grant_general_analysis_graph" model="ir.ui.view">
@@ -44,6 +79,9 @@
         <menuitem id="menu_reporting_general_analysis" name="General Analysis"
                   parent="menu_grant_reporting" action="action_grant_general_analysis" sequence="5"
                   groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_subgrants" name="Subgrant Reports"
+                  parent="menu_grant_reporting" action="action_subgrant_analysis" sequence="15"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
         <menuitem id="menu_reporting_financial" name="Financial Grant Reports"
                   parent="menu_grant_reporting" action="action_grant_general_analysis" sequence="10"
                   groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
@@ -62,8 +100,14 @@
         <menuitem id="menu_reporting_amendments" name="Amendment Reports"
                   parent="menu_grant_reporting" action="action_amendment" sequence="40"
                   groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_subgrant_amendments" name="Subgrant Amendment Reports"
+                  parent="menu_grant_reporting" action="action_subgrant_amendment" sequence="45"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
         <menuitem id="menu_reporting_disbursements" name="Disbursement Reports"
                   parent="menu_grant_reporting" action="action_disbursement" sequence="50"
+                  groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_reporting_subgrant_disbursements" name="Subgrant Disbursement Reports"
+                  parent="menu_grant_reporting" action="action_subgrant_disbursement" sequence="55"
                   groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
         <menuitem id="menu_reporting_compliance" name="Compliance Reports"
                   parent="menu_grant_reporting" action="action_compliance" sequence="60"

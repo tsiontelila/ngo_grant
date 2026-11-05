@@ -144,7 +144,7 @@ class NgoGrantAmendment(models.Model):
         store=True,
         help='Grant approved amount before this amendment',
     )
-    
+
     currency_id = fields.Many2one(
         'res.currency',
         related='grant_id.currency_id',
@@ -398,10 +398,8 @@ class NgoGrantAmendment(models.Model):
             if not vals.get('amendment_number'):
                 vals['amendment_number'] = self.env['ir.sequence'].next_by_code('ngo.grant.amendment') or 'AMD-NEW'
             if not vals.get('original_end_date'):
-                grant_id = vals.get('grant_id')
-                if grant_id:
-                    grant = self.env['ngo.grant'].browse(grant_id)
-                    vals['original_end_date'] = grant.end_date
+                if vals.get('grant_id'):
+                    vals['original_end_date'] = self.env['ngo.grant'].browse(vals['grant_id']).end_date
         amendments = super(NgoGrantAmendment, self).create(vals_list)
         for amendment in amendments:
             amendment.message_post(

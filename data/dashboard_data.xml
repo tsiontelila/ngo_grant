@@ -1,0 +1,48 @@
+<odoo>
+    <data noupdate="1">
+        <record id="dashboard_grants" model="ngo.grant.dashboard">
+            <field name="name">Grant Portfolio</field><field name="description">Grant records by lifecycle stage</field><field name="sequence">10</field>
+            <field name="model_name">ngo.grant</field><field name="action_xmlid">ngo_grant.action_grant</field><field name="groupby_field">state</field><field name="chart_type">donut</field><field name="color">#714B67</field><field name="icon">fa fa-handshake-o</field>
+        </record>
+        <record id="dashboard_donors" model="ngo.grant.dashboard">
+            <field name="name">Donor Portfolio</field><field name="description">Donor organizations by type</field><field name="sequence">20</field>
+            <field name="model_name">ngo.grant.donor</field><field name="action_xmlid">ngo_grant.action_donor</field><field name="groupby_field">donor_type</field><field name="chart_type">pie</field><field name="color">#168C83</field><field name="icon">fa fa-users</field>
+        </record>
+        <record id="dashboard_projects" model="ngo.grant.dashboard">
+            <field name="name">Projects</field><field name="description">Funded projects by status</field><field name="sequence">30</field>
+            <field name="model_name">ngo.grant.project</field><field name="action_xmlid">ngo_grant.action_grant_project</field><field name="groupby_field">state</field><field name="chart_type">horizontal_bar</field><field name="color">#4F7CAC</field><field name="icon">fa fa-tasks</field>
+        </record>
+        <record id="dashboard_disbursements" model="ngo.grant.dashboard">
+            <field name="name">Grant Disbursements</field><field name="description">Grant disbursements by approval status</field><field name="sequence">40</field>
+            <field name="model_name">ngo.grant.disbursement</field><field name="action_xmlid">ngo_grant.action_disbursement</field><field name="groupby_field">state</field><field name="chart_type">vertical_bar</field><field name="color">#2D9B73</field><field name="icon">fa fa-money</field>
+        </record>
+        <record id="dashboard_amendments" model="ngo.grant.dashboard">
+            <field name="name">Grant Amendments</field><field name="description">Grant amendments by status</field><field name="sequence">50</field>
+            <field name="model_name">ngo.grant.amendment</field><field name="action_xmlid">ngo_grant.action_amendment</field><field name="groupby_field">state</field><field name="chart_type">status</field><field name="color">#D89B36</field><field name="icon">fa fa-edit</field>
+        </record>
+        <record id="dashboard_compliance" model="ngo.grant.dashboard">
+            <field name="name">Compliance</field><field name="description">Compliance obligations by status</field><field name="sequence">60</field>
+            <field name="model_name">ngo.grant.compliance</field><field name="action_xmlid">ngo_grant.action_compliance</field><field name="groupby_field">state</field><field name="chart_type">status</field><field name="color">#C45151</field><field name="icon">fa fa-check-circle</field>
+        </record>
+        <record id="dashboard_documents" model="ngo.grant.dashboard">
+            <field name="name">Documents</field><field name="description">Grant documents by status</field><field name="sequence">70</field>
+            <field name="model_name">ngo.grant.document</field><field name="action_xmlid">ngo_grant.action_document</field><field name="groupby_field">state</field><field name="chart_type">status</field><field name="color">#65758B</field><field name="icon">fa fa-file-text-o</field>
+        </record>
+        <record id="dashboard_reporting_schedules" model="ngo.grant.dashboard">
+            <field name="name">Reporting Schedules</field><field name="description">Scheduled reports by status</field><field name="sequence">80</field>
+            <field name="model_name">ngo.grant.reporting.schedule</field><field name="action_xmlid">ngo_grant.action_reporting_schedule</field><field name="groupby_field">state</field><field name="chart_type">status</field><field name="color">#6C63A8</field><field name="icon">fa fa-calendar</field>
+        </record>
+        <record id="dashboard_subgrants" model="ngo.grant.dashboard">
+            <field name="name">Subgrants</field><field name="description">Subgrants by lifecycle stage</field><field name="sequence">90</field>
+            <field name="model_name">ngo.subgrant</field><field name="action_xmlid">ngo_grant.action_subgrant</field><field name="groupby_field">state</field><field name="chart_type">donut</field><field name="color">#875A7B</field><field name="icon">fa fa-sitemap</field>
+        </record>
+        <record id="dashboard_subgrant_amendments" model="ngo.grant.dashboard">
+            <field name="name">Subgrant Amendments</field><field name="description">Subgrant amendments by status</field><field name="sequence">100</field>
+            <field name="model_name">ngo.subgrant.amendment</field><field name="action_xmlid">ngo_grant.action_subgrant_amendment</field><field name="groupby_field">state</field><field name="chart_type">status</field><field name="color">#D89B36</field><field name="icon">fa fa-edit</field>
+        </record>
+        <record id="dashboard_subgrant_disbursements" model="ngo.grant.dashboard">
+            <field name="name">Subgrant Disbursements</field><field name="description">Subgrant disbursements by status</field><field name="sequence">110</field>
+            <field name="model_name">ngo.subgrant.disbursement</field><field name="action_xmlid">ngo_grant.action_subgrant_disbursement</field><field name="groupby_field">state</field><field name="chart_type">vertical_bar</field><field name="color">#2D9B73</field><field name="icon">fa fa-money</field>
+        </record>
+    </data>
+</odoo>

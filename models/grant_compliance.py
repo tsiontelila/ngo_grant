@@ -24,6 +24,7 @@ class NgoGrantCompliance(models.Model):
         tracking=True,
         help='Associated grant',
     )
+    subgrant_id = fields.Many2one('ngo.subgrant', string='Subgrant', ondelete='cascade', tracking=True)
     
     # Identification
     name = fields.Char(

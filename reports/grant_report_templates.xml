@@ -56,6 +56,23 @@
                             </tbody>
                         </table>
 
+                        <t t-if="o.subgrant_ids">
+                            <h4 class="mt-4">Subgrants</h4>
+                            <table class="table table-sm table-striped">
+                                <thead><tr><th>Subgrant</th><th>Name</th><th>Approved Amount</th><th>Disbursed</th><th>Remaining</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    <tr t-foreach="o.subgrant_ids" t-as="sg">
+                                        <td><span t-field="sg.grant_number"/></td>
+                                        <td><span t-field="sg.grant_name"/></td>
+                                        <td><span t-field="sg.approved_amount" t-options='{"widget": "monetary", "display_currency": sg.currency_id}'/></td>
+                                        <td><span t-field="sg.disbursed_amount" t-options='{"widget": "monetary", "display_currency": sg.currency_id}'/></td>
+                                        <td><span t-field="sg.remaining_amount" t-options='{"widget": "monetary", "display_currency": sg.currency_id}'/></td>
+                                        <td><span t-field="sg.state"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+
                         <h4 class="mt-4">Funded Projects</h4>
                         <table class="table table-sm table-striped">
                             <thead>
