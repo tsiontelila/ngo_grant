@@ -28,6 +28,19 @@ for (let index = 1; index <= 6; index++) {
     );
 }
 
+const MODERN_PALETTE = [
+    "#6366F1", // Indigo
+    "#10B981", // Emerald
+    "#06B6D4", // Cyan
+    "#F59E0B", // Amber
+    "#EF4444", // Rose
+    "#8B5CF6", // Violet
+    "#EC4899", // Pink
+    "#14B8A6", // Teal
+    "#3B82F6", // Blue
+    "#F97316", // Orange
+];
+
 export class NgoGrantDashboard extends Component {
     static template = "ngo_grant.NgoGrantDashboard";
 
@@ -40,9 +53,36 @@ export class NgoGrantDashboard extends Component {
             loading: true,
             refreshing: false,
             canInteract: false,
+            activeTab: "all", // "all", "portfolio", "disbursement", "compliance"
+            quickFilter: "all", // "all", "active", "review", "draft"
             dashboards: [],
-            filters: { programAreaId: "", status: "", grantId: "", donorId: "" },
-            filterOptions: { program_areas: [], statuses: [], grants: [], donors: [] },
+            summary: {
+                total_funding: 0,
+                total_disbursed: 0,
+                total_remaining: 0,
+                subgrant_funding: 0,
+                disbursement_rate: 0,
+                remaining_rate: 0,
+                grants_count: 0,
+                active_grants_count: 0,
+                under_review_count: 0,
+                draft_count: 0,
+                approved_count: 0,
+                closed_count: 0,
+                donors_count: 0,
+                projects_count: 0,
+                subgrants_count: 0,
+                overdue_reports: 0,
+                upcoming_reports: 0,
+                pending_disbursements: 0,
+                overdue_compliance: 0,
+                currency_symbol: "$",
+                currency_position: "before",
+                currency_name: "",
+                top_grants: [],
+            },
+            filters: { sectorId: "", programAreaId: "", status: "", grantId: "", donorId: "" },
+            filterOptions: { sectors: [], program_areas: [], statuses: [], grants: [], donors: [] },
         });
 
         onWillStart(() => this.loadDashboard());
@@ -61,10 +101,11 @@ export class NgoGrantDashboard extends Component {
 
         try {
             this.state.canInteract = await this.orm.call(
-                'ngo.grant.dashboard',
-                'can_user_interact',
+                "ngo.grant.dashboard",
+                "can_user_interact",
                 [],
             );
+
             try {
                 this.state.filterOptions = await this.orm.call(
                     "ngo.grant.dashboard",
@@ -73,25 +114,30 @@ export class NgoGrantDashboard extends Component {
                         this.state.filters.grantId,
                         this.state.filters.donorId,
                         this.state.filters.programAreaId,
+                        this.state.filters.sectorId,
                     ],
                 );
             } catch (error) {
                 console.warn("NGO Grant Dashboard filter options unavailable:", error);
             }
+
+            try {
+                this.state.summary = await this.orm.call(
+                    "ngo.grant.dashboard",
+                    "get_executive_summary",
+                    [this.getDashboardFilters()],
+                );
+            } catch (error) {
+                console.warn("NGO Grant Dashboard executive summary error:", error);
+            }
+
             const dashboards = await this.orm.searchRead(
                 "ngo.grant.dashboard",
                 [],
                 DASHBOARD_FIELDS,
                 {
                     order: "sequence, id",
-                    context: {
-                        ngo_dashboard_filters: JSON.stringify({
-                            program_area_id: this.state.filters.programAreaId,
-                            status: this.state.filters.status,
-                            grant_id: this.state.filters.grantId,
-                            donor_id: this.state.filters.donorId,
-                        }),
-                    },
+                    context: this.getDashboardFilterContext(),
                 },
             );
 
@@ -118,7 +164,7 @@ export class NgoGrantDashboard extends Component {
         this.state.refreshing = true;
         try {
             await this.loadDashboard();
-            this.notify("Dashboard refreshed.", "success");
+            this.notify("Dashboard refreshed with latest data.", "success");
         } finally {
             this.state.refreshing = false;
         }
@@ -126,7 +172,54 @@ export class NgoGrantDashboard extends Component {
 
     async onFilterChange(field, value) {
         this.state.filters[field] = value;
+        if (field === "status") {
+            if (value === "active") this.state.quickFilter = "active";
+            else if (value === "under_review") this.state.quickFilter = "review";
+            else if (value === "draft") this.state.quickFilter = "draft";
+            else if (!value) this.state.quickFilter = "all";
+            else this.state.quickFilter = "custom";
+        }
         await this.loadDashboard();
+    }
+
+    async setQuickFilter(key) {
+        this.state.quickFilter = key;
+        if (key === "all") {
+            this.state.filters.status = "";
+        } else if (key === "active") {
+            this.state.filters.status = "active";
+        } else if (key === "review") {
+            this.state.filters.status = "under_review";
+        } else if (key === "draft") {
+            this.state.filters.status = "draft";
+        }
+        await this.loadDashboard();
+    }
+
+    async resetFilters() {
+        this.state.filters = {
+            sectorId: "",
+            programAreaId: "",
+            status: "",
+            grantId: "",
+            donorId: "",
+        };
+        this.state.quickFilter = "all";
+        await this.loadDashboard();
+    }
+
+    setActiveTab(tab) {
+        this.state.activeTab = tab;
+    }
+
+    get activeFilterCount() {
+        let count = 0;
+        if (this.state.filters.sectorId) count++;
+        if (this.state.filters.programAreaId) count++;
+        if (this.state.filters.status) count++;
+        if (this.state.filters.grantId) count++;
+        if (this.state.filters.donorId) count++;
+        return count;
     }
 
     getDashboardFilterContext() {
@@ -138,10 +231,87 @@ export class NgoGrantDashboard extends Component {
     getDashboardFilters() {
         return {
             program_area_id: this.state.filters.programAreaId,
+            sector_id: this.state.filters.sectorId,
             status: this.state.filters.status,
             grant_id: this.state.filters.grantId,
             donor_id: this.state.filters.donorId,
         };
+    }
+
+    getCategory(dashboard) {
+        const model = dashboard.model_name || "";
+        if (["ngo.grant", "ngo.grant.donor", "ngo.grant.project"].includes(model)) {
+            return "portfolio";
+        }
+        if (
+            [
+                "ngo.grant.disbursement",
+                "ngo.subgrant",
+                "ngo.subgrant.amendment",
+                "ngo.subgrant.disbursement",
+            ].includes(model)
+        ) {
+            return "disbursement";
+        }
+        if (
+            [
+                "ngo.grant.compliance",
+                "ngo.grant.reporting.schedule",
+                "ngo.grant.amendment",
+                "ngo.grant.document",
+            ].includes(model)
+        ) {
+            return "compliance";
+        }
+        return "other";
+    }
+
+    getCategoryBadge(dashboard) {
+        const cat = this.getCategory(dashboard);
+        if (cat === "portfolio") return "Portfolio & Governance";
+        if (cat === "disbursement") return "Financial & Subgrants";
+        if (cat === "compliance") return "Compliance & Schedules";
+        return "General";
+    }
+
+    get visibleDashboards() {
+        let list = this.state.dashboards;
+        if (this.state.activeTab !== "all") {
+            list = list.filter((d) => this.getCategory(d) === this.state.activeTab);
+        }
+        return list;
+    }
+
+    formatCurrency(amount, compact = false) {
+        if (amount === undefined || amount === null) return "0";
+        const num = Number(amount) || 0;
+        const symbol = this.state.summary.currency_symbol || "$";
+        const position = this.state.summary.currency_position || "before";
+
+        let formatted = "";
+        if (compact) {
+            if (Math.abs(num) >= 1_000_000_000) {
+                formatted = (num / 1_000_000_000).toFixed(1) + "B";
+            } else if (Math.abs(num) >= 1_000_000) {
+                formatted = (num / 1_000_000).toFixed(1) + "M";
+            } else if (Math.abs(num) >= 1_000) {
+                formatted = (num / 1_000).toFixed(1) + "k";
+            } else {
+                formatted = Math.round(num).toLocaleString();
+            }
+        } else {
+            formatted = num.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+            });
+        }
+
+        return position === "after" ? `${formatted} ${symbol}` : `${symbol}${formatted}`;
+    }
+
+    formatNumber(num) {
+        if (!num && num !== 0) return "0";
+        return Number(num).toLocaleString();
     }
 
     prepareDashboard(dashboard) {
@@ -174,7 +344,7 @@ export class NgoGrantDashboard extends Component {
     getDashboardClass(dashboard) {
         const name = (dashboard.name || "").toLowerCase();
 
-        if (name.includes("grant")) {
+        if (name.includes("grant") && !name.includes("amendment") && !name.includes("disbursement")) {
             return "ngo-dashboard-panel--large";
         }
         if (name.includes("donor")) {
@@ -206,17 +376,10 @@ export class NgoGrantDashboard extends Component {
     }
 
     getColor(index, dashboard) {
-        // Use the dashboard accent for the first slice, then distinct
-        // status colors so donut/pie categories never collapse into one color.
-        const colors = [
-            dashboard.color || "#714B67",
-            "#9CA3AF",
-            "#5B8FF9",
-            "#F0AD4E",
-            "#D9534F",
-            "#875A7B",
-        ];
-        return colors[index % colors.length];
+        if (index === 0 && dashboard && dashboard.color) {
+            return dashboard.color;
+        }
+        return MODERN_PALETTE[index % MODERN_PALETTE.length];
     }
 
     getStatusStyle(status, dashboard) {
@@ -224,8 +387,8 @@ export class NgoGrantDashboard extends Component {
             0,
             Math.min(100, Number(status.percent || 0)),
         );
-
-        return `width:${percentage}%;background-color:${dashboard.color || "#714B67"};`;
+        const color = this.getColor(status.index - 1, dashboard);
+        return `width:${percentage}%;background:${color};`;
     }
 
     getBarHeight(statuses, status) {
@@ -239,18 +402,19 @@ export class NgoGrantDashboard extends Component {
         );
 
         return Math.max(
-            8,
+            12,
             (Number(status.count || 0) / maximum) * 100,
         );
     }
 
     getBarStyle(status, statuses, dashboard) {
-        return `height:${this.getBarHeight(statuses, status)}%;background-color:${dashboard.color || "#714B67"};`;
+        const color = this.getColor(status.index - 1, dashboard);
+        return `height:${this.getBarHeight(statuses, status)}%;background:${color};`;
     }
 
     getDonutStyle(statuses, dashboard) {
         if (!statuses.length) {
-            return "background:#e9ecef;";
+            return "background:#f1f5f9;";
         }
 
         let current = 0;
@@ -288,6 +452,25 @@ export class NgoGrantDashboard extends Component {
         }
     }
 
+    async openAllGrants() {
+        if (!this.state.canInteract) {
+            return;
+        }
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_open_all_grants",
+                [],
+            );
+            if (result) {
+                await this.action.doAction(result);
+            }
+        } catch (error) {
+            console.error("Unable to open all grants:", error);
+            this.notify("Unable to open all grants.", "danger");
+        }
+    }
+
     async openStatus(dashboard, status) {
         if (!this.state.canInteract || !dashboard?.id || !status?.index) {
             return;
@@ -318,6 +501,152 @@ export class NgoGrantDashboard extends Component {
                 "Unable to open the selected records.",
                 "danger",
             );
+        }
+    }
+
+    async createNewGrant() {
+        if (!this.state.canInteract) return;
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_create_grant",
+                [],
+            );
+            if (result) await this.action.doAction(result);
+        } catch (error) {
+            console.error("Error creating grant:", error);
+        }
+    }
+
+    async createNewDisbursement() {
+        if (!this.state.canInteract) return;
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_create_disbursement",
+                [],
+            );
+            if (result) await this.action.doAction(result);
+        } catch (error) {
+            console.error("Error creating disbursement:", error);
+        }
+    }
+
+    async openExportWizard() {
+        if (!this.state.canInteract) return;
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_open_export_wizard",
+                [],
+            );
+            if (result) await this.action.doAction(result);
+        } catch (error) {
+            console.error("Error opening export wizard:", error);
+        }
+    }
+
+    async openActiveGrants() {
+        if (!this.state.canInteract) return;
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_open_active_grants",
+                [],
+                { context: this.getDashboardFilterContext() },
+            );
+            if (result) await this.action.doAction(result);
+        } catch (error) {
+            console.error("Error opening active grants:", error);
+        }
+    }
+
+    async openUnderReviewGrants() {
+        if (!this.state.canInteract) return;
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_open_under_review_grants",
+                [],
+                { context: this.getDashboardFilterContext() },
+            );
+            if (result) await this.action.doAction(result);
+        } catch (error) {
+            console.error("Error opening under review grants:", error);
+        }
+    }
+
+    async openApprovedGrants() {
+        if (!this.state.canInteract) return;
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_open_approved_grants",
+                [],
+            );
+            if (result) await this.action.doAction(result);
+        } catch (error) {
+            console.error("Error opening approved grants:", error);
+            this.notify("Unable to open approved grants.", "danger");
+        }
+    }
+
+    async openOverdueReports() {
+        if (!this.state.canInteract) return;
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_open_overdue_reports",
+                [],
+                { context: this.getDashboardFilterContext() },
+            );
+            if (result) await this.action.doAction(result);
+        } catch (error) {
+            console.error("Error opening overdue reports:", error);
+        }
+    }
+
+    async openPendingDisbursements() {
+        if (!this.state.canInteract) return;
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_open_pending_disbursements",
+                [],
+                { context: this.getDashboardFilterContext() },
+            );
+            if (result) await this.action.doAction(result);
+        } catch (error) {
+            console.error("Error opening pending disbursements:", error);
+        }
+    }
+
+    async openOverdueCompliance() {
+        if (!this.state.canInteract) return;
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_open_overdue_compliance",
+                [],
+                { context: this.getDashboardFilterContext() },
+            );
+            if (result) await this.action.doAction(result);
+        } catch (error) {
+            console.error("Error opening overdue compliance:", error);
+        }
+    }
+
+    async openGrant(grantId) {
+        if (!this.state.canInteract || !grantId) return;
+        try {
+            const result = await this.orm.call(
+                "ngo.grant.dashboard",
+                "action_open_grant",
+                [grantId],
+            );
+            if (result) await this.action.doAction(result);
+        } catch (error) {
+            console.error("Error opening grant:", error);
         }
     }
 }

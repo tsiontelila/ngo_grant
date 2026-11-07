@@ -123,8 +123,9 @@ class NgoGrantDisbursementApprovalStep(models.Model):
             'action_date': fields.Datetime.now(),
             'action_user_id': self.env.user.id,
         })
-        self.disbursement.sudo().with_context(allow_disbursement_state_change=True).write({'state': 'rejected'})
-        self.disbursement.sudo().message_post(body=_('Disbursement rejected at approval step: %s') % self.name)
+        disbursement = self.disbursement_id
+        disbursement.sudo().with_context(allow_disbursement_state_change=True).write({'state': 'rejected'})
+        disbursement.sudo().message_post(body=_('Disbursement rejected at approval step: %s') % self.name)
 
     @api.model_create_multi
     def create(self, vals_list):

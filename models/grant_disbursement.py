@@ -2,6 +2,7 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, ValidationError, UserError
+from .workflow_access import check_cancellation_access, check_reset_access
 
 
 class NgoGrantDisbursement(models.Model):
@@ -13,7 +14,7 @@ class NgoGrantDisbursement(models.Model):
 
     _name = 'ngo.grant.disbursement'
     _description = 'NGO Grant Disbursement'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'ngo.cancellation.access.mixin']
     _order = 'disbursement_date desc, id desc'
 
     name = fields.Char(
@@ -221,6 +222,11 @@ class NgoGrantDisbursement(models.Model):
         vals = dict(vals)
         if 'state' in vals and not self.env.context.get('allow_disbursement_state_change'):
             raise AccessError(_('Disbursement state can only be changed through its workflow actions.'))
+        if not self.env.su and vals.get('state') == 'draft' and any(record.state in ('approved', 'processed') for record in self):
+            raise AccessError(_('Cancel the approved disbursement before resetting it to Draft.'))
+        if not self.env.su and set(vals) - {'state'}:
+            if any(record.state in ('approved', 'processed', 'cancelled') for record in self):
+                raise AccessError(_('Approved disbursements are locked. An administrator must cancel them before they can be reset and edited.'))
         vals.pop('approval_line_ids', None)
         if vals.get('disbursement_type_id'):
             disbursement_type = self.env['ngo.grant.disbursement.type'].browse(vals['disbursement_type_id'])
@@ -251,8 +257,40 @@ class NgoGrantDisbursement(models.Model):
         for rec in self:
             if rec.state != 'draft':
                 raise UserError(_('Only Draft disbursements can be submitted.'))
-            if not rec.approval_line_ids:
-                raise UserError(_('Assign at least one approver to this disbursement type before submitting.'))
+
+            # A form can display onchange-created approval lines that were not
+            # persisted with the disbursement. Rebuild a missing or incomplete
+            # chain from the selected type's saved configuration before submit.
+            approval_lines = rec.approval_line_ids.sudo().exists()
+            if not approval_lines or any(
+                not line.approver_id and not line.group_id for line in approval_lines
+            ):
+                disbursement_type = rec.disbursement_type_id.sudo()
+                templates = disbursement_type.approval_step_ids.sorted(
+                    key=lambda step: (step.sequence, step.id)
+                )
+                if not templates or any(
+                    not step.approver_id and not step.group_id for step in templates
+                ):
+                    raise UserError(_(
+                        'No approvers are assigned to the selected disbursement type. '
+                        'Save at least one assigned approval step in the type configuration.'
+                    ))
+
+                ApprovalStep = self.env['ngo.grant.disbursement.approval.step'].sudo()
+                if approval_lines:
+                    approval_lines.unlink()
+                ApprovalStep.create([{
+                    'disbursement_id': rec.id,
+                    'sequence': step.sequence,
+                    'name': step.name,
+                    'approver_id': step.approver_id.id,
+                    'group_id': step.group_id.id,
+                } for step in templates])
+                rec.invalidate_recordset(['approval_line_ids'])
+
+            if not rec.approval_line_ids.sudo().exists():
+                raise UserError(_('No saved approval steps were found for this disbursement.'))
         self.with_context(allow_disbursement_state_change=True).write({'state': 'submitted'})
         self.message_post(body=_('Disbursement submitted to its configured approval chain.'))
 
@@ -291,24 +329,28 @@ class NgoGrantDisbursement(models.Model):
 
     def action_cancel(self):
         """Cancel disbursement."""
-        self.with_context(allow_disbursement_state_change=True).write({'state': 'cancelled'})
-        self.message_post(body=_('Disbursement cancelled.'))
+        check_cancellation_access(self)
+        self.sudo().with_context(allow_disbursement_state_change=True, allow_cancel_reset_state_change=True).write({'state': 'cancelled'})
+        self.sudo().message_post(body=_('Disbursement cancelled.'))
 
-    def action_draft(self):
-        """Reset a processed disbursement to draft."""
-        for rec in self:
-            if rec.state == 'draft':
-                continue
-            rec.approval_line_ids.sudo().write({
+    def action_reset_cancelled(self):
+        check_reset_access(self)
+        for record in self:
+            if record.state != 'cancelled':
+                raise ValidationError(_('Only cancelled disbursements can be reset to Draft.'))
+            record.approval_line_ids.sudo().write({
                 'state': 'pending', 'action_date': False, 'action_user_id': False,
             })
-            if rec.state != 'processed':
-                rec.with_context(allow_disbursement_state_change=True).write({'state': 'draft'})
-                rec.message_post(body=_('Disbursement reset to draft.'))
-                continue
+            record.sudo().with_context(allow_disbursement_state_change=True, allow_cancel_reset_state_change=True).write({
+                'state': 'draft', 'rejection_reason': False,
+                'level1_approved_by': False, 'level1_approved_date': False,
+                'level2_approved_by': False, 'level2_approved_date': False,
+            })
+            record.sudo().message_post(body=_('Cancelled disbursement reset to Draft for revision.'))
 
-            rec.with_context(allow_disbursement_state_change=True).write({'state': 'draft'})
-            rec.message_post(body=_('Disbursement reset to draft.'))
+    def action_draft(self):
+        """Reset only a cancelled disbursement, with responsible-user access."""
+        return self.action_reset_cancelled()
 
     # ── Constraints ───────────────────────────────────────────────────────────
     @api.constrains('amount')

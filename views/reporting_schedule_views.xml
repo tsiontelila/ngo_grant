@@ -9,6 +9,7 @@
             <field name="arch" type="xml">
                 <list string="Grant Reporting Schedules">
                     <field name="grant_id"/>
+                    <field name="subgrant_id"/>
                     <field name="name"/>
                     <field name="report_type"/>
                     <field name="report_period_start"/>
@@ -33,29 +34,33 @@
                         <button name="action_reject" string="Reject" type="object" invisible="state not in ['submitted', 'under_donor_review']" class="btn-danger"/>
                         <button name="action_waive" string="Waive" type="object" invisible="state not in ['draft', 'scheduled', 'in_preparation', 'submitted']" class="btn-secondary"/>
                         <button name="action_send_reminder" string="Send Reminder" type="object" class="btn-secondary"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_preparation,submitted,under_donor_review,accepted,completed,rejected,overdue,cancelled"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'" groups="ngo_grant.group_ngo_director,base.group_system" class="btn-danger"/>
+                        <button name="action_reset_cancelled" string="Reset to Draft" type="object" invisible="state != 'cancelled' or not can_reset_cancelled" class="btn-warning"/>
+                        <field name="state" widget="statusbar" readonly="1" statusbar_visible="draft,scheduled,in_preparation,submitted,under_donor_review,accepted,completed,rejected,overdue,cancelled"/>
                     </header>
                     
                     <sheet>
+                        <field name="can_reset_cancelled" invisible="1"/>
                         <div class="oe_title">
                             <h1>
-                                <field name="name" placeholder="Report Name"/>
+                                <field name="name" placeholder="Report Name" readonly="state in ['accepted', 'completed', 'cancelled']"/>
                             </h1>
                         </div>
                         
                         <group>
                             <group>
-                                <field name="grant_id"/>
-                                <field name="report_type"/>
-                                <field name="reporting_frequency"/>
-                                <field name="responsible_id"/>
-                                <field name="responsible_employee_id"/>
-                                <field name="donor_contact_id"/>
+                                <field name="grant_id" readonly="state in ['accepted', 'completed', 'cancelled']"/>
+                                <field name="subgrant_id" readonly="state in ['accepted', 'completed', 'cancelled']"/>
+                                <field name="report_type" readonly="state in ['accepted', 'completed', 'cancelled']"/>
+                                <field name="reporting_frequency" readonly="state in ['accepted', 'completed', 'cancelled']"/>
+                                <field name="responsible_id" readonly="state in ['accepted', 'completed', 'cancelled']"/>
+                                <field name="responsible_employee_id" readonly="state in ['accepted', 'completed', 'cancelled']"/>
+                                <field name="donor_contact_id" readonly="state in ['accepted', 'completed', 'cancelled']"/>
                             </group>
                             <group>
-                                <field name="report_period_start"/>
-                                <field name="report_period_end"/>
-                                <field name="report_date"/>
+                                <field name="report_period_start" readonly="state in ['accepted', 'completed', 'cancelled']"/>
+                                <field name="report_period_end" readonly="state in ['accepted', 'completed', 'cancelled']"/>
+                                <field name="report_date" readonly="state in ['accepted', 'completed', 'cancelled']"/>
                                 <field name="submitted_date" readonly="1"/>
                                 <field name="donor_response_date" readonly="1"/>
                                 <field name="is_overdue" readonly="1"/>
@@ -65,20 +70,20 @@
                         </group>
                         
                         <group>
-                            <field name="donor_reference" placeholder="Donor reference..."/>
+                            <field name="donor_reference" placeholder="Donor reference..." readonly="state in ['accepted', 'completed', 'cancelled']"/>
                         </group>
                         
                         <group>
-                            <field name="description" placeholder="Report description..."/>
+                            <field name="description" placeholder="Report description..." readonly="state in ['accepted', 'completed', 'cancelled']"/>
                         </group>
                         
                         <group>
-                            <field name="requirements" placeholder="Specific requirements..."/>
+                            <field name="requirements" placeholder="Specific requirements..." readonly="state in ['accepted', 'completed', 'cancelled']"/>
                         </group>
                         
                         <notebook>
                             <page string="Report Documents">
-                                <field name="document_ids">
+                                <field name="document_ids" readonly="state in ['accepted', 'completed', 'cancelled']" context="{'default_grant_id': grant_id, 'default_reporting_schedule_id': id}">
                                     <list>
                                         <field name="name"/>
                                         <field name="document_type"/>

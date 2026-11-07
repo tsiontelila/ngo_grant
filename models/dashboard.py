@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import json
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError
@@ -162,12 +164,18 @@ class NgoGrantDashboard(models.Model):
         grant_filter = filters.get("grant_id")
         donor_filter = filters.get("donor_id")
         program_area_filter = filters.get("program_area_id")
+        sector_filter = filters.get("sector_id")
         scoped_grant_ids = None
 
-        if program_area_filter:
+        if sector_filter:
             scoped_grant_ids = set(self.env["ngo.grant"].search([
+                ("sector_id", "=", int(sector_filter))
+            ]).ids)
+        if program_area_filter:
+            area_grant_ids = set(self.env["ngo.grant"].search([
                 ("program_area_id", "=", int(program_area_filter))
             ]).ids)
+            scoped_grant_ids = area_grant_ids if scoped_grant_ids is None else scoped_grant_ids & area_grant_ids
         if grant_filter:
             selected_grants = {int(grant_filter)}
             scoped_grant_ids = selected_grants if scoped_grant_ids is None else scoped_grant_ids & selected_grants
@@ -177,10 +185,6 @@ class NgoGrantDashboard(models.Model):
                 .search([("donor_id", "=", int(donor_filter))])
                 .mapped("grant_id").ids
             )
-            donor_subgrant_lines = self.env["ngo.subgrant.donor.line"].search([
-                ("donor_id", "=", int(donor_filter))
-            ])
-            donor_grants.update(donor_subgrant_lines.mapped("subgrant_id.grant_id").ids)
             scoped_grant_ids = donor_grants if scoped_grant_ids is None else scoped_grant_ids & donor_grants
 
         scoped_subgrant_ids = set()
@@ -188,10 +192,8 @@ class NgoGrantDashboard(models.Model):
             scoped_subgrant_ids.update(self.env["ngo.subgrant"].search([
                 ("grant_id", "in", list(scoped_grant_ids))
             ]).ids)
-        if donor_filter:
-            scoped_subgrant_ids.update(donor_subgrant_lines.mapped("subgrant_id").ids)
 
-        if grant_filter or program_area_filter or donor_filter:
+        if grant_filter or program_area_filter or sector_filter or donor_filter:
             grant_ids = list(scoped_grant_ids or [])
             if self.model_name == "ngo.grant":
                 domain.append(("id", "in", grant_ids))
@@ -202,6 +204,12 @@ class NgoGrantDashboard(models.Model):
                     domain.append(("id", "=", int(donor_filter)))
                 if grant_filter or program_area_filter:
                     domain.append(("donor_line_ids.grant_id", "in", grant_ids))
+            elif "grant_id" in model._fields and "subgrant_id" in model._fields:
+                domain.extend([
+                    "|",
+                    ("grant_id", "in", grant_ids),
+                    ("subgrant_id", "in", list(scoped_subgrant_ids)),
+                ])
             elif "grant_id" in model._fields:
                 domain.append(("grant_id", "in", grant_ids))
             elif "subgrant_id" in model._fields:
@@ -336,7 +344,7 @@ class NgoGrantDashboard(models.Model):
         return self.env.user.has_group('base.group_user')
 
     @api.model
-    def get_filter_options(self, grant_id=False, donor_id=False, program_area_id=False):
+    def get_filter_options(self, grant_id=False, donor_id=False, program_area_id=False, sector_id=False):
         """Return dashboard filter options using the caller's access rights."""
         grants = self.env["ngo.grant"].search([], order="grant_name, id")
         donors = self.env["ngo.grant.donor"].search([], order="name, id")
@@ -344,6 +352,8 @@ class NgoGrantDashboard(models.Model):
         currency_domain = []
         if program_area_id:
             currency_domain.append(("program_area_id", "=", int(program_area_id)))
+        if sector_id:
+            currency_domain.append(("sector_id", "=", int(sector_id)))
         if grant_id:
             currency_domain.append(("id", "=", int(grant_id)))
         if donor_id:
@@ -353,6 +363,7 @@ class NgoGrantDashboard(models.Model):
             currency_domain.append(("id", "in", donor_grant_ids))
         scoped_grants = self.env["ngo.grant"].search(currency_domain)
         currencies = scoped_grants.mapped("currency_id")
+        sectors = grants.mapped("sector_id")
         reporting_currency = (
             currencies.name
             if len(currencies) == 1
@@ -375,12 +386,290 @@ class NgoGrantDashboard(models.Model):
                 # other filter choices and reporting currency from loading.
                 continue
         return {
+            "sectors": [{"id": sector.id, "name": sector.display_name} for sector in sectors],
             "grants": [{"id": grant.id, "name": grant.grant_name} for grant in grants],
             "donors": [{"id": donor.id, "name": donor.donor_code} for donor in donors],
             "program_areas": [{"id": area.id, "name": area.display_name} for area in program_areas],
             "statuses": [{"value": value, "label": label} for value, label in statuses.items()],
             "reporting_currency": reporting_currency or "",
         }
+
+    @api.model
+    def get_executive_summary(self, filters=None):
+        """Return executive KPI metrics, health indicators, alerts, and spotlight grants."""
+        if filters is None:
+            filters = {}
+        elif isinstance(filters, str):
+            try:
+                filters = json.loads(filters)
+            except Exception:
+                filters = {}
+
+        domain = []
+        grant_filter = filters.get("grant_id")
+        donor_filter = filters.get("donor_id")
+        program_area_filter = filters.get("program_area_id")
+        sector_filter = filters.get("sector_id")
+        status_filter = filters.get("status")
+
+        if sector_filter:
+            domain.append(("sector_id", "=", int(sector_filter)))
+        if program_area_filter:
+            domain.append(("program_area_id", "=", int(program_area_filter)))
+        if grant_filter:
+            domain.append(("id", "=", int(grant_filter)))
+        if donor_filter:
+            donor_grant_ids = self.env["ngo.grant.donor.line"].search([
+                ("donor_id", "=", int(donor_filter))
+            ]).mapped("grant_id").ids
+            domain.append(("id", "in", donor_grant_ids))
+        if status_filter:
+            domain.append(("state", "=", status_filter))
+
+        grants = self.env["ngo.grant"].search(domain)
+        # The dashboard totals include every current grant status, while Odoo's
+        # normal active filter keeps archived/inactive grants out of the totals.
+        all_grants = self.env["ngo.grant"].search([])
+        grant_ids = grants.ids
+
+        company = self.env.company
+        currency = company.currency_id
+        today = fields.Date.today()
+
+        def to_reporting_currency(grant, amount):
+            return grant.currency_id._convert(amount or 0.0, currency, company, today)
+
+        # The funding headline and grant count always represent the full grant
+        # portfolio, regardless of the detail filters selected below.
+        total_funding = sum(to_reporting_currency(grant, grant.approved_amount) for grant in all_grants)
+        total_disbursed = sum(to_reporting_currency(grant, grant.disbursed_amount) for grant in grants)
+        approved_grants = all_grants.filtered(lambda grant: grant.state == "approved")
+        total_remaining = 0.0
+        for grant in approved_grants:
+            committed_disbursements = sum(grant.disbursement_ids.filtered(
+                lambda item: item.state in ("approved", "processed")
+            ).mapped("amount"))
+            remaining = max(grant.approved_amount - committed_disbursements, 0.0)
+            total_remaining += to_reporting_currency(grant, remaining)
+        subgrant_funding = sum(
+            to_reporting_currency(grant, grant.subgrant_amount) for grant in grants
+        )
+        disbursement_rate = round((total_disbursed / total_funding * 100), 1) if total_funding > 0 else 0.0
+        approved_funding = sum(to_reporting_currency(grant, grant.approved_amount) for grant in approved_grants)
+        remaining_rate = round((total_remaining / approved_funding * 100), 1) if approved_funding > 0 else 0.0
+
+        all_donors = self.env["ngo.grant.donor"].search([])
+        all_projects = self.env["ngo.grant.project"].search([])
+        scoped_projects = self.env["ngo.grant.project"].search([("grant_id", "in", grant_ids)]) if grant_ids else []
+        scoped_subgrants = self.env["ngo.subgrant"].search([("grant_id", "in", grant_ids)]) if grant_ids else []
+
+        grants_count = len(all_grants)
+        active_grants_count = len(grants.filtered(lambda g: g.state == "active"))
+        under_review_count = len(grants.filtered(lambda g: g.state in ("submitted", "under_review")))
+        draft_count = len(grants.filtered(lambda g: g.state == "draft"))
+        approved_count = len(approved_grants)
+        closed_count = len(grants.filtered(lambda g: g.state == "closed"))
+
+        today = fields.Date.today()
+        upcoming_date = today + relativedelta(days=30)
+
+        rep_domain_base = [("grant_id", "in", grant_ids)] if grant_ids else []
+        overdue_reports = self.env["ngo.grant.reporting.schedule"].search_count(
+            rep_domain_base + [
+                ("state", "not in", ["completed", "accepted", "cancelled"]),
+                ("report_date", "<", today),
+            ]
+        )
+        upcoming_reports = self.env["ngo.grant.reporting.schedule"].search_count(
+            rep_domain_base + [
+                ("state", "not in", ["completed", "accepted", "cancelled"]),
+                ("report_date", ">=", today),
+                ("report_date", "<=", upcoming_date),
+            ]
+        )
+
+        disb_domain_base = [("grant_id", "in", grant_ids)] if grant_ids else []
+        pending_disbursements = self.env["ngo.grant.disbursement"].search_count(
+            disb_domain_base + [("state", "in", ["draft", "submitted"])]
+        )
+
+        comp_domain_base = [("grant_id", "in", grant_ids)] if grant_ids else []
+        overdue_compliance = self.env["ngo.grant.compliance"].search_count(
+            comp_domain_base + [
+                ("state", "not in", ["compliant", "waived", "cancelled"]),
+                ("due_date", "<", today),
+            ]
+        )
+
+        currency_symbol = currency.symbol or currency.name or "$"
+        currency_position = currency.position or "before"
+
+        top_grants_records = grants.sorted(key=lambda g: g.approved_amount, reverse=True)[:5]
+        top_grants = []
+        for g in top_grants_records:
+            donor_name = g.donor_line_ids[:1].donor_id.name if g.donor_line_ids else "Various Donors"
+            pct = round((g.disbursed_amount / g.approved_amount * 100), 1) if g.approved_amount > 0 else 0.0
+            top_grants.append({
+                "id": g.id,
+                "name": g.grant_name,
+                "number": g.grant_number or f"G-{g.id:04d}",
+                "state": g.state or "draft",
+                "state_label": dict(g._fields["state"].selection).get(g.state, g.state),
+                "donor_name": donor_name,
+                "approved_amount": g.approved_amount,
+                "disbursed_amount": g.disbursed_amount,
+                "remaining_amount": g.remaining_amount,
+                "disbursement_rate": pct,
+                "end_date": str(g.end_date) if g.end_date else False,
+            })
+
+        return {
+            "total_funding": total_funding,
+            "total_disbursed": total_disbursed,
+            "total_remaining": total_remaining,
+            "subgrant_funding": subgrant_funding,
+            "disbursement_rate": disbursement_rate,
+            "remaining_rate": remaining_rate,
+            "grants_count": grants_count,
+            "active_grants_count": active_grants_count,
+            "under_review_count": under_review_count,
+            "draft_count": draft_count,
+            "approved_count": approved_count,
+            "closed_count": closed_count,
+            "donors_count": len(all_donors),
+            "projects_count": len(scoped_projects) if grant_ids else len(all_projects),
+            "subgrants_count": len(scoped_subgrants),
+            "overdue_reports": overdue_reports,
+            "upcoming_reports": upcoming_reports,
+            "pending_disbursements": pending_disbursements,
+            "overdue_compliance": overdue_compliance,
+            "currency_symbol": currency_symbol,
+            "currency_position": currency_position,
+            "currency_name": currency.name or "",
+            "top_grants": top_grants,
+        }
+
+    @api.model
+    def action_open_active_grants(self, filters=None):
+        self._check_dashboard_interaction()
+        action = self.env.ref("ngo_grant.action_grant", raise_if_not_found=False)
+        if not action:
+            return False
+        res = action.read()[0]
+        res["domain"] = [("state", "=", "active")]
+        return res
+
+    @api.model
+    def action_open_all_grants(self):
+        self._check_dashboard_interaction()
+        action = self.env.ref("ngo_grant.action_grant", raise_if_not_found=False)
+        if not action:
+            return False
+        result = action.read()[0]
+        result["domain"] = []
+        result["context"] = {"active_test": True}
+        return result
+
+    @api.model
+    def action_open_approved_grants(self):
+        self._check_dashboard_interaction()
+        action = self.env.ref("ngo_grant.action_grant", raise_if_not_found=False)
+        if not action:
+            return False
+        result = action.read()[0]
+        result["domain"] = [("state", "=", "approved")]
+        result["context"] = {"active_test": True}
+        return result
+
+    @api.model
+    def action_open_under_review_grants(self, filters=None):
+        self._check_dashboard_interaction()
+        action = self.env.ref("ngo_grant.action_grant", raise_if_not_found=False)
+        if not action:
+            return False
+        res = action.read()[0]
+        res["domain"] = [("state", "in", ["submitted", "under_review"])]
+        return res
+
+    @api.model
+    def action_open_overdue_reports(self, filters=None):
+        self._check_dashboard_interaction()
+        action = self.env.ref("ngo_grant.action_reporting_schedule", raise_if_not_found=False)
+        if not action:
+            return False
+        res = action.read()[0]
+        today = fields.Date.today()
+        res["domain"] = [
+            ("state", "not in", ["completed", "accepted", "cancelled"]),
+            ("report_date", "<", today),
+        ]
+        return res
+
+    @api.model
+    def action_open_pending_disbursements(self, filters=None):
+        self._check_dashboard_interaction()
+        action = self.env.ref("ngo_grant.action_disbursement", raise_if_not_found=False)
+        if not action:
+            return False
+        res = action.read()[0]
+        res["domain"] = [("state", "in", ["draft", "submitted"])]
+        return res
+
+    @api.model
+    def action_open_overdue_compliance(self, filters=None):
+        self._check_dashboard_interaction()
+        action = self.env.ref("ngo_grant.action_compliance", raise_if_not_found=False)
+        if not action:
+            return False
+        res = action.read()[0]
+        today = fields.Date.today()
+        res["domain"] = [
+            ("state", "not in", ["compliant", "waived", "cancelled"]),
+            ("due_date", "<", today),
+        ]
+        return res
+
+    @api.model
+    def action_open_grant(self, grant_id):
+        self._check_dashboard_interaction()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Grant"),
+            "res_model": "ngo.grant",
+            "res_id": int(grant_id),
+            "views": [[False, "form"]],
+            "target": "current",
+        }
+
+    @api.model
+    def action_create_grant(self):
+        self._check_dashboard_interaction()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("New Grant"),
+            "res_model": "ngo.grant",
+            "views": [[False, "form"]],
+            "target": "current",
+        }
+
+    @api.model
+    def action_create_disbursement(self):
+        self._check_dashboard_interaction()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("New Disbursement"),
+            "res_model": "ngo.grant.disbursement",
+            "views": [[False, "form"]],
+            "target": "current",
+        }
+
+    @api.model
+    def action_open_export_wizard(self):
+        self._check_dashboard_interaction()
+        action = self.env.ref("ngo_grant.action_grant_export_wizard", raise_if_not_found=False)
+        if not action:
+            return False
+        return action.read()[0]
 
     def _check_dashboard_interaction(self):
         if not self.can_user_interact():

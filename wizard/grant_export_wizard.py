@@ -190,20 +190,6 @@ class GrantExportWizard(models.TransientModel):
                     'Status': dl.state,
                     'Currency': grant.currency_id.name,
                 })
-            for subgrant in grant.subgrant_ids:
-                for line in subgrant.donor_line_ids:
-                    rows.append({
-                        'Donor Name': line.donor_id.name if line.donor_id else '',
-                        'Subgrant': '%s - %s' % (subgrant.grant_number, subgrant.grant_name),
-                        'Lead Donor': line.lead_donor,
-                        'Donor Reference': line.donor_reference or '',
-                        'Agreement Reference': line.agreement_reference or '',
-                        'Contribution Amount': line.contribution_amount,
-                        'Contribution %': line.contribution_percentage,
-                        'Status': line.state,
-                        'Currency': line.currency_id.name,
-                    })
-
         elif rt == 'budget_vs_actual':
             for bp in grant.budget_period_ids:
                 rows.append({

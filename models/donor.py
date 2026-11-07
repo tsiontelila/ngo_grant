@@ -24,6 +24,7 @@ class NgoGrantDonor(models.Model):
         string='Partner',
         required=True,
         ondelete='cascade',
+        tracking=True,
         help='Linked partner record',
     )
     
@@ -114,6 +115,7 @@ class NgoGrantDonor(models.Model):
         'ir.ui.view',
         string='Reporting Template',
         domain=[('type', '=', 'qweb')],
+        tracking=True,
         help='QWeb template for donor reports',
     )
     
@@ -132,6 +134,7 @@ class NgoGrantDonor(models.Model):
     
     compliance_notes = fields.Text(
         string='Compliance Notes',
+        tracking=True,
         help='Notes regarding donor compliance requirements',
     )
     

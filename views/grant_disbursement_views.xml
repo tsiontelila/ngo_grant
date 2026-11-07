@@ -34,38 +34,36 @@
                         <button name="action_process" string="Process Disbursement" type="object"
                                 invisible="state != 'approved'" class="btn-primary"/>
                         <button name="action_cancel" string="Cancel" type="object"
-                                invisible="state not in ['draft','submitted','level1_approved','approved']"
+                                invisible="state == 'cancelled'"
+                                groups="ngo_grant.group_ngo_director,base.group_system"
                                 class="btn-secondary"/>
-                        <button name="action_draft" string="Reset to Draft" type="object"
-                                invisible="state in ['draft','processed']"
-                                class="btn-secondary"/>
-                        <button name="action_draft" string="Reset Disbursement" type="object"
-                                invisible="state != 'processed'" class="btn-warning"
-                                confirm="Reset this processed disbursement to draft?"/>
+                        <button name="action_reset_cancelled" string="Reset to Draft" type="object"
+                                invisible="state != 'cancelled' or not can_reset_cancelled" class="btn-warning"/>
                         <field name="state" widget="statusbar"
-                               statusbar_visible="draft,submitted,level1_approved,approved,processed"/>
+                               readonly="1" statusbar_visible="draft,submitted,level1_approved,approved,processed,rejected,cancelled"/>
                     </header>
 
                     <sheet>
+                        <field name="can_reset_cancelled" invisible="1"/>
                         <div class="oe_title">
                             <h1><field name="name" readonly="1"/></h1>
                         </div>
 
                         <group>
                             <group string="Disbursement Details">
-                                <field name="grant_id"/>
+                                <field name="grant_id" readonly="state in ['approved', 'processed', 'cancelled']"/>
                                 <field name="disbursement_type_id" required="1" readonly="state != 'draft'"/>
-                                <field name="disbursement_date"/>
-                                <field name="payment_reference"/>
+                                <field name="disbursement_date" readonly="state in ['approved', 'processed', 'cancelled']"/>
+                                <field name="payment_reference" readonly="state in ['approved', 'processed', 'cancelled']"/>
                             </group>
                             <group string="Amount">
-                                <field name="amount"/>
+                                <field name="amount" readonly="state in ['approved', 'processed', 'cancelled']"/>
                                 <field name="currency_id" readonly="1"/>
                             </group>
                         </group>
 
                         <group>
-                            <field name="description" placeholder="Description of this disbursement..."/>
+                            <field name="description" placeholder="Description of this disbursement..." readonly="state in ['approved', 'processed', 'cancelled']"/>
                         </group>
 
 
@@ -89,12 +87,12 @@
                                 </field>
                             </page>
                             <page string="Notes">
-                                <field name="notes" placeholder="Internal notes..."/>
+                                <field name="notes" placeholder="Internal notes..." readonly="state in ['approved', 'processed', 'cancelled']"/>
                             </page>
 
                             <page string="Settings">
                                 <group>
-                                    <field name="active"/>
+                                    <field name="active" readonly="state in ['approved', 'processed', 'cancelled']"/>
                                 </group>
                             </page>
                         </notebook>

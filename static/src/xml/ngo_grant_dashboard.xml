@@ -1,558 +1,568 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <templates xml:space="preserve">
 
     <t t-name="ngo_grant.NgoGrantDashboard">
-
         <div t-attf-class="o_ngo_grant_dashboard {{ state.canInteract ? 'o_dashboard_interactive' : 'o_dashboard_readonly' }}">
 
-            <!-- HEADER -->
-            <div class="ngo-dashboard-header">
-
-                <div class="ngo-dashboard-header-left">
-
-                    <div class="ngo-dashboard-title-row">
-
-                        <div class="ngo-dashboard-title-icon">
-                            <i class="fa fa-line-chart"/>
-                        </div>
-
-                        <div>
-                            <h1>NGO Grant Dashboard</h1>
-
-                        </div>
-
+            <!-- TOP HERO HEADER -->
+            <header class="ngo-modern-header">
+                <div class="ngo-header-brand">
+                    <div class="ngo-header-icon">
+                        <i class="fa fa-line-chart"/>
                     </div>
-
+                    <div class="ngo-header-text">
+                        <div class="ngo-header-eyebrow">
+                            <span class="ngo-eyebrow-pill">NGO GRANT SUITE</span>
+                        </div>
+                        <h1 class="ngo-header-title">Grant Intelligence Dashboard</h1>
+                    </div>
                 </div>
 
-                <div class="ngo-dashboard-header-right">
-
+                <div class="ngo-header-actions">
                     <button
                         type="button"
-                        class="btn btn-light ngo-dashboard-refresh"
+                        class="ngo-btn ngo-btn--secondary ngo-btn--refresh"
+                        t-att-class="{ 'ngo-btn--spinning': state.refreshing }"
                         t-on-click="() => this.refreshDashboard()"
-                        title="Refresh Dashboard"
+                        title="Refresh all metrics"
                     >
-                        <i class="fa fa-refresh me-1"/>
-                        Refresh
+                        <i t-attf-class="fa fa-refresh me-1 {{ state.refreshing ? 'fa-spin' : '' }}"/>
+                        <span>Refresh</span>
                     </button>
+                </div>
+            </header>
 
+            <!-- EXECUTIVE HERO KPI METRICS (3 CLEAN CARDS) -->
+            <section class="ngo-hero-kpi-grid">
+                <!-- 1. Total Funding -->
+                <div class="ngo-kpi-card ngo-kpi-card--primary" t-on-click="() => this.openAllGrants()">
+                    <div class="ngo-kpi-header">
+                        <span class="ngo-kpi-title">Total Funding</span>
+                        <div class="ngo-kpi-badge ngo-kpi-badge--indigo">
+                            <i class="fa fa-bank"/>
+                        </div>
+                    </div>
+                    <div class="ngo-kpi-value">
+                        <t t-esc="formatCurrency(state.summary.total_funding)"/>
+                    </div>
+                    <div class="ngo-kpi-footer">
+                        <span class="ngo-kpi-pill">
+                            <i class="fa fa-folder-open-o me-1"/>
+                            <strong><t t-esc="state.summary.grants_count"/></strong> All Grants
+                        </span>
+                        <span class="ngo-kpi-subtext" t-on-click.stop="() => this.openActiveGrants()">
+                            <strong><t t-esc="state.summary.active_grants_count"/></strong> Active Portfolio
+                        </span>
+                    </div>
                 </div>
 
+                <!-- 2. Disbursed Capital & Burn Rate -->
+                <div class="ngo-kpi-card ngo-kpi-card--emerald" t-on-click="() => this.openAll(state.dashboards.find(d => (d.name || '').toLowerCase().includes('disbursement')))">
+                    <div class="ngo-kpi-header">
+                        <span class="ngo-kpi-title">Disbursed Capital</span>
+                        <div class="ngo-kpi-badge ngo-kpi-badge--emerald">
+                            <i class="fa fa-paper-plane-o"/>
+                        </div>
+                    </div>
+                    <div class="ngo-kpi-value">
+                        <t t-esc="formatCurrency(state.summary.total_disbursed)"/>
+                    </div>
+                    <div class="ngo-kpi-progress">
+                        <div class="ngo-kpi-progress-bar" t-att-style="'width:' + state.summary.disbursement_rate + '%;'"></div>
+                    </div>
+                    <div class="ngo-kpi-footer">
+                        <span class="ngo-kpi-pill ngo-kpi-pill--emerald">
+                            <t t-esc="state.summary.disbursement_rate"/>% Disbursed
+                        </span>
+                        <span class="ngo-kpi-subtext">Execution progress</span>
+                    </div>
+                </div>
+
+                <!-- 3. Available Funding Balance -->
+                <div class="ngo-kpi-card ngo-kpi-card--cyan ngo-kpi-card--clickable" t-on-click="() => this.openApprovedGrants()" title="Open approved grants">
+                    <div class="ngo-kpi-header">
+                        <span class="ngo-kpi-title">Approved Remaining Balance</span>
+                        <div class="ngo-kpi-badge ngo-kpi-badge--cyan">
+                            <i class="fa fa-shield"/>
+                        </div>
+                    </div>
+                    <div class="ngo-kpi-value">
+                        <t t-esc="formatCurrency(state.summary.total_remaining)"/>
+                    </div>
+                    <div class="ngo-kpi-footer">
+                        <span class="ngo-kpi-subtext">
+                            <strong><t t-esc="state.summary.approved_count"/></strong> Approved Grants
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MODERN INTERACTIVE TOOLBAR & FILTERS -->
+            <section class="ngo-toolbar-container">
+                <div class="ngo-toolbar-top">
+                    <!-- Quick Presets -->
+                    <div class="ngo-quick-presets">
+                        <button
+                            type="button"
+                            t-att-class="'ngo-preset-pill ' + (state.quickFilter === 'all' ? 'ngo-preset-pill--active' : '')"
+                            t-on-click="() => this.setQuickFilter('all')"
+                        >
+                            All Grants
+                        </button>
+                        <button
+                            type="button"
+                            t-att-class="'ngo-preset-pill ' + (state.quickFilter === 'active' ? 'ngo-preset-pill--active' : '')"
+                            t-on-click="() => this.setQuickFilter('active')"
+                        >
+                            Grant Pipeline
+                        </button>
+                        <button
+                            type="button"
+                            t-att-class="'ngo-preset-pill ' + (state.quickFilter === 'review' ? 'ngo-preset-pill--active' : '')"
+                            t-on-click="() => this.setQuickFilter('review')"
+                        >
+                            Under Review
+                        </button>
+                        <button
+                            type="button"
+                            t-att-class="'ngo-preset-pill ' + (state.quickFilter === 'draft' ? 'ngo-preset-pill--active' : '')"
+                            t-on-click="() => this.setQuickFilter('draft')"
+                        >
+                            Drafts
+                        </button>
+                    </div>
+
+                    <!-- Reset Filters Button -->
+                    <div class="ngo-toolbar-end">
+                        <button
+                            t-if="activeFilterCount > 0"
+                            type="button"
+                            class="ngo-btn-reset-filters"
+                            t-on-click="() => this.resetFilters()"
+                            title="Reset all filters"
+                        >
+                            <i class="fa fa-filter me-1"/>
+                            Clear Filters (<t t-esc="activeFilterCount"/>)
+                        </button>
+
+                        <div class="ngo-currency-indicator" t-if="state.filterOptions.reporting_currency">
+                            <span>Currency:</span>
+                            <strong><t t-esc="state.filterOptions.reporting_currency"/></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dropdown Selectors Row -->
+                <div class="ngo-filters-row">
+                    <div class="ngo-filter-group">
+                        <span class="ngo-filter-label"><i class="fa fa-globe me-1"/>Sector</span>
+                        <select
+                            class="ngo-filter-select"
+                            t-att-value="state.filters.sectorId"
+                            t-on-change="(ev) => this.onFilterChange('sectorId', ev.target.value)"
+                        >
+                            <option value="">All sectors</option>
+                            <t t-foreach="state.filterOptions.sectors" t-as="sector" t-key="sector.id">
+                                <option t-att-value="sector.id"><t t-esc="sector.name"/></option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div class="ngo-filter-group">
+                        <span class="ngo-filter-label"><i class="fa fa-compass me-1"/>Program Area</span>
+                        <select
+                            class="ngo-filter-select"
+                            t-att-value="state.filters.programAreaId"
+                            t-on-change="(ev) => this.onFilterChange('programAreaId', ev.target.value)"
+                        >
+                            <option value="">All program areas</option>
+                            <t t-foreach="state.filterOptions.program_areas" t-as="area" t-key="area.id">
+                                <option t-att-value="area.id"><t t-esc="area.name"/></option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div class="ngo-filter-group">
+                        <span class="ngo-filter-label"><i class="fa fa-file-text-o me-1"/>Grant</span>
+                        <select
+                            class="ngo-filter-select"
+                            t-att-value="state.filters.grantId"
+                            t-on-change="(ev) => this.onFilterChange('grantId', ev.target.value)"
+                        >
+                            <option value="">All grants</option>
+                            <t t-foreach="state.filterOptions.grants" t-as="grant" t-key="grant.id">
+                                <option t-att-value="grant.id"><t t-esc="grant.name"/></option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div class="ngo-filter-group">
+                        <span class="ngo-filter-label"><i class="fa fa-users me-1"/>Donor</span>
+                        <select
+                            class="ngo-filter-select"
+                            t-att-value="state.filters.donorId"
+                            t-on-change="(ev) => this.onFilterChange('donorId', ev.target.value)"
+                        >
+                            <option value="">All donors</option>
+                            <t t-foreach="state.filterOptions.donors" t-as="donor" t-key="donor.id">
+                                <option t-att-value="donor.id"><t t-esc="donor.name"/></option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div class="ngo-filter-group">
+                        <span class="ngo-filter-label"><i class="fa fa-sliders me-1"/>Status</span>
+                        <select
+                            class="ngo-filter-select"
+                            t-att-value="state.filters.status"
+                            t-on-change="(ev) => this.onFilterChange('status', ev.target.value)"
+                        >
+                            <option value="">All statuses</option>
+                            <t t-foreach="state.filterOptions.statuses" t-as="st" t-key="st.value">
+                                <option t-att-value="st.value"><t t-esc="st.label"/></option>
+                            </t>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CATEGORY VIEW SELECTOR TABS -->
+            <div class="ngo-category-nav">
+                <button
+                    type="button"
+                    t-att-class="'ngo-tab-btn ' + (state.activeTab === 'all' ? 'ngo-tab-btn--active' : '')"
+                    t-on-click="() => this.setActiveTab('all')"
+                >
+                    <i class="fa fa-th-large me-1"/>
+                    All Insights
+                    <span class="ngo-tab-count"><t t-esc="state.dashboards.length"/></span>
+                </button>
+                <button
+                    type="button"
+                    t-att-class="'ngo-tab-btn ' + (state.activeTab === 'portfolio' ? 'ngo-tab-btn--active' : '')"
+                    t-on-click="() => this.setActiveTab('portfolio')"
+                >
+                    <i class="fa fa-handshake-o me-1"/>
+                    Portfolio &amp; Donors
+                </button>
+                <button
+                    type="button"
+                    t-att-class="'ngo-tab-btn ' + (state.activeTab === 'disbursement' ? 'ngo-tab-btn--active' : '')"
+                    t-on-click="() => this.setActiveTab('disbursement')"
+                >
+                    <i class="fa fa-money me-1"/>
+                    Disbursements &amp; Subgrants
+                </button>
+                <button
+                    type="button"
+                    t-att-class="'ngo-tab-btn ' + (state.activeTab === 'compliance' ? 'ngo-tab-btn--active' : '')"
+                    t-on-click="() => this.setActiveTab('compliance')"
+                >
+                    <i class="fa fa-check-square-o me-1"/>
+                    Compliance &amp; Schedules
+                </button>
             </div>
 
-
-            <!-- DASHBOARD FILTERS -->
-            <div class="ngo-dashboard-filters">
-                <label>
-                    <span>Program Area</span>
-                    <select t-att-value="state.filters.programAreaId" t-on-change="(ev) => this.onFilterChange('programAreaId', ev.target.value)">
-                        <option value="">All program areas</option>
-                        <t t-foreach="state.filterOptions.program_areas" t-as="area" t-key="area.id">
-                            <option t-att-value="area.id"><t t-esc="area.name"/></option>
-                        </t>
-                    </select>
-                </label>
-                <label>
-                    <span>Status</span>
-                    <select t-att-value="state.filters.status" t-on-change="(ev) => this.onFilterChange('status', ev.target.value)">
-                        <option value="">All statuses</option>
-                        <t t-foreach="state.filterOptions.statuses" t-as="status" t-key="status.value">
-                            <option t-att-value="status.value"><t t-esc="status.label"/></option>
-                        </t>
-                    </select>
-                </label>
-                <label>
-                    <span>Grant</span>
-                    <select t-att-value="state.filters.grantId" t-on-change="(ev) => this.onFilterChange('grantId', ev.target.value)">
-                        <option value="">All grants</option>
-                        <t t-foreach="state.filterOptions.grants" t-as="grant" t-key="grant.id">
-                            <option t-att-value="grant.id"><t t-esc="grant.name"/></option>
-                        </t>
-                    </select>
-                </label>
-                <label>
-                    <span>Donor</span>
-                    <select t-att-value="state.filters.donorId" t-on-change="(ev) => this.onFilterChange('donorId', ev.target.value)">
-                        <option value="">All donors</option>
-                        <t t-foreach="state.filterOptions.donors" t-as="donor" t-key="donor.id">
-                            <option t-att-value="donor.id"><t t-esc="donor.name"/></option>
-                        </t>
-                    </select>
-                </label>
-                <div class="ngo-dashboard-reporting-currency">
-                    Reporting currency:<br/>
-                    <strong><t t-esc="state.filterOptions.reporting_currency || ''"/></strong>
+            <!-- TOP GRANTS SPOTLIGHT (EXECUTIVE HIGHLIGHT TABLE) -->
+            <section t-if="state.summary.top_grants and state.summary.top_grants.length" class="ngo-spotlight-section">
+                <div class="ngo-spotlight-header">
+                    <div class="ngo-spotlight-title">
+                        <i class="fa fa-star text-warning me-2"/>
+                        <h3>Major Active Grants Portfolio</h3>
+                    </div>
+                    <span class="ngo-spotlight-subtext">Highest allocation funding commitments</span>
                 </div>
-            </div>
-
-
-            <!-- SUMMARY -->
-            <div class="ngo-dashboard-summary">
-
-                <t t-set="grant_dashboard"
-                   t-value="state.dashboards.find(d => (d.name || '').toLowerCase().includes('grant'))"/>
-
-                <t t-set="donor_dashboard"
-                   t-value="state.dashboards.find(d => (d.name || '').toLowerCase().includes('donor'))"/>
-
-                <t t-set="project_dashboard"
-                   t-value="state.dashboards.find(d => (d.name || '').toLowerCase().includes('project'))"/>
-
-                <t t-set="disbursement_dashboard"
-                   t-value="state.dashboards.find(d => (d.name || '').toLowerCase().includes('disbursement'))"/>
-
-
-                <div
-                    t-if="grant_dashboard"
-                    class="ngo-summary-item ngo-summary-item--purple"
-                    t-on-click="() => this.openAll(grant_dashboard)"
-                >
-                    <div class="ngo-summary-icon">
-                        <i class="fa fa-handshake-o"/>
-                    </div>
-
-                    <div class="ngo-summary-content">
-                        <span class="ngo-summary-label">
-                            Total Grants
-                        </span>
-
-                        <strong>
-                            <t t-esc="grant_dashboard.total_count"/>
-                        </strong>
-                    </div>
+                <div class="ngo-spotlight-table-container">
+                    <table class="ngo-spotlight-table">
+                        <thead>
+                            <tr>
+                                <th>Grant Reference</th>
+                                <th>Primary Donor</th>
+                                <th>Status</th>
+                                <th class="text-end">Approved Budget</th>
+                                <th class="text-end">Disbursed</th>
+                                <th>Execution Rate</th>
+                                <th class="text-end">Remaining</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="state.summary.top_grants" t-as="grant" t-key="grant.id">
+                                <tr class="ngo-spotlight-row" t-on-click="() => this.openGrant(grant.id)">
+                                    <td>
+                                        <div class="ngo-grant-cell">
+                                            <strong><t t-esc="grant.name"/></strong>
+                                            <span class="ngo-grant-subnum"><t t-esc="grant.number"/></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="ngo-donor-tag"><t t-esc="grant.donor_name"/></span>
+                                    </td>
+                                    <td>
+                                        <span t-attf-class="ngo-status-tag ngo-status-tag--{{ grant.state }}">
+                                            <t t-esc="grant.state_label"/>
+                                        </span>
+                                    </td>
+                                    <td class="text-end font-monospace">
+                                        <strong><t t-esc="formatCurrency(grant.approved_amount)"/></strong>
+                                    </td>
+                                    <td class="text-end font-monospace text-success">
+                                        <t t-esc="formatCurrency(grant.disbursed_amount)"/>
+                                    </td>
+                                    <td>
+                                        <div class="ngo-table-progress-wrap">
+                                            <div class="ngo-table-progress-track">
+                                                <div class="ngo-table-progress-fill" t-att-style="'width:' + grant.disbursement_rate + '%;'"></div>
+                                            </div>
+                                            <span class="ngo-table-progress-pct"><t t-esc="grant.disbursement_rate"/>%</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end font-monospace text-primary">
+                                        <t t-esc="formatCurrency(grant.remaining_amount)"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <button
+                                            type="button"
+                                            class="ngo-row-open-btn"
+                                            title="View Grant Details"
+                                            t-on-click.stop="() => this.openGrant(grant.id)"
+                                        >
+                                            <i class="fa fa-chevron-right"/>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
                 </div>
+            </section>
 
-
-                <div
-                    t-if="donor_dashboard"
-                    class="ngo-summary-item ngo-summary-item--teal"
-                    t-on-click="() => this.openAll(donor_dashboard)"
-                >
-                    <div class="ngo-summary-icon">
-                        <i class="fa fa-users"/>
-                    </div>
-
-                    <div class="ngo-summary-content">
-                        <span class="ngo-summary-label">
-                            Total Donors
-                        </span>
-
-                        <strong>
-                            <t t-esc="donor_dashboard.total_count"/>
-                        </strong>
-                    </div>
-                </div>
-
-
-                <div
-                    t-if="project_dashboard"
-                    class="ngo-summary-item ngo-summary-item--blue"
-                    t-on-click="() => this.openAll(project_dashboard)"
-                >
-                    <div class="ngo-summary-icon">
-                        <i class="fa fa-tasks"/>
-                    </div>
-
-                    <div class="ngo-summary-content">
-                        <span class="ngo-summary-label">
-                            Total Projects
-                        </span>
-
-                        <strong>
-                            <t t-esc="project_dashboard.total_count"/>
-                        </strong>
-                    </div>
-                </div>
-
-
-                <div
-                    t-if="disbursement_dashboard"
-                    class="ngo-summary-item ngo-summary-item--green"
-                    t-on-click="() => this.openAll(disbursement_dashboard)"
-                >
-                    <div class="ngo-summary-icon">
-                        <i class="fa fa-money"/>
-                    </div>
-
-                    <div class="ngo-summary-content">
-                        <span class="ngo-summary-label">
-                            Disbursements
-                        </span>
-
-                        <strong>
-                            <t t-esc="disbursement_dashboard.total_count"/>
-                        </strong>
-                    </div>
-                </div>
-
-            </div>
-
-
-            <!-- LOADING -->
+            <!-- LOADING SKELETON / SPINNER -->
             <t t-if="state.loading">
-
                 <div class="ngo-dashboard-loading">
-
-                    <div class="ngo-dashboard-loading-spinner">
-                        <i class="fa fa-spinner fa-spin"/>
+                    <div class="ngo-spinner-wrapper">
+                        <div class="ngo-spinner-ring"></div>
+                        <i class="fa fa-shield ngo-spinner-center-icon"/>
                     </div>
-
-                    <span>
-                        Loading dashboard...
-                    </span>
-
+                    <h4 class="mt-3">Analyzing Grant Intelligence...</h4>
+                    <p class="text-muted">Aggregating multi-donor allocations, disbursements, and compliance metrics</p>
                 </div>
-
             </t>
 
-
-            <!-- EMPTY -->
-            <t t-elif="!state.dashboards.length">
-
+            <!-- EMPTY STATE -->
+            <t t-elif="!visibleDashboards.length">
                 <div class="ngo-dashboard-empty">
-
                     <div class="ngo-dashboard-empty-icon">
-                        <i class="fa fa-bar-chart"/>
+                        <i class="fa fa-folder-open-o"/>
                     </div>
-
-                    <h3>
-                        No dashboard data available
-                    </h3>
-
-                    <p>
-                        There are currently no dashboard sections
-                        configured for NGO Grant Management.
-                    </p>
-
+                    <h3>No matching analytics panels found</h3>
+                    <p>Try selecting another dashboard category or adjusting the filters above.</p>
+                    <button type="button" class="ngo-btn ngo-btn--primary mt-2" t-on-click="() => this.resetFilters()">
+                        <i class="fa fa-refresh me-1"/> Reset All Filters
+                    </button>
                 </div>
-
             </t>
 
-
-            <!-- DASHBOARD -->
+            <!-- ANALYTICS CARDS GRID -->
             <t t-else="">
-
                 <div class="ngo-dashboard-grid">
-
-                    <t
-                        t-foreach="state.dashboards"
-                        t-as="dashboard"
-                        t-key="dashboard.id"
-                    >
-
+                    <t t-foreach="visibleDashboards" t-as="dashboard" t-key="dashboard.id">
                         <section
                             t-att-class="'ngo-dashboard-panel ' + getDashboardClass(dashboard)"
-                            t-att-style="'--panel-color: ' + (dashboard.color || '#714B67')"
+                            t-att-style="'--panel-color: ' + (dashboard.color || '#6366F1')"
                         >
-
                             <!-- PANEL HEADER -->
                             <div class="ngo-panel-header">
-
-                                <div class="ngo-panel-title">
-
+                                <div class="ngo-panel-header-left">
                                     <div
                                         class="ngo-panel-icon"
-                                        t-att-style="'background-color: ' + (dashboard.color || '#714B67')"
+                                        t-att-style="'background: ' + (dashboard.color || '#6366F1') + '15; color: ' + (dashboard.color || '#6366F1') + '; border-color: ' + (dashboard.color || '#6366F1') + '30;'"
                                     >
-                                        <i
-                                            t-att-class="dashboard.icon || 'fa fa-bar-chart'"
-                                        />
+                                        <i t-att-class="dashboard.icon || 'fa fa-bar-chart'"/>
                                     </div>
-
-                                    <div>
-
-                                        <h2>
+                                    <div class="ngo-panel-title-block">
+                                        <div class="ngo-panel-category-tag">
+                                            <t t-esc="getCategoryBadge(dashboard)"/>
+                                        </div>
+                                        <h2 class="ngo-panel-heading">
                                             <t t-esc="dashboard.name"/>
                                         </h2>
-
-                                        <span t-if="dashboard.description">
-                                            <t t-esc="dashboard.description"/>
-                                        </span>
-
                                     </div>
-
                                 </div>
 
                                 <button
                                     type="button"
                                     class="ngo-panel-open"
                                     t-att-disabled="!state.canInteract"
-                                    title="Open Records"
+                                    title="Open detailed records"
                                     t-on-click="() => this.openAll(dashboard)"
                                 >
                                     <i class="fa fa-external-link"/>
                                 </button>
-
                             </div>
-
 
                             <!-- PANEL BODY -->
                             <div class="ngo-panel-body">
-
                                 <div class="ngo-panel-total">
-
-                                    <span>Total</span>
-
-                                    <strong>
-                                        <t t-esc="dashboard.total_count"/>
-                                    </strong>
-
+                                    <div class="ngo-total-metric">
+                                        <span class="ngo-total-label">Total Records</span>
+                                        <strong class="ngo-total-number">
+                                            <t t-esc="formatNumber(dashboard.total_count)"/>
+                                        </strong>
+                                    </div>
                                 </div>
 
-
-                                <!-- PIE / DONUT -->
-                                <t t-if="
-                                    getChartType(dashboard) === 'pie'
-                                    or getChartType(dashboard) === 'donut'
-                                ">
-
+                                <!-- PIE / DONUT CHART -->
+                                <t t-if="getChartType(dashboard) === 'pie' or getChartType(dashboard) === 'donut'">
                                     <div class="ngo-pie-layout">
-
                                         <div class="ngo-donut-wrapper">
-
                                             <div
                                                 t-att-class="'ngo-donut ' + (getChartType(dashboard) === 'pie' ? 'ngo-pie' : 'ngo-donut-ring')"
                                                 t-att-style="getDonutStyle(dashboard.statuses, dashboard)"
                                             >
-
-                                                <div
-                                                    t-if="getChartType(dashboard) === 'donut'"
-                                                    class="ngo-donut-center"
-                                                >
-
-                                                    <strong>
-                                                        <t t-esc="dashboard.total_count"/>
-                                                    </strong>
-
+                                                <div t-if="getChartType(dashboard) === 'donut'" class="ngo-donut-center">
+                                                    <strong><t t-esc="formatNumber(dashboard.total_count)"/></strong>
                                                     <span>Total</span>
-
                                                 </div>
-
                                             </div>
-
                                         </div>
 
-
                                         <div class="ngo-legend">
-
-                                            <t
-                                                t-foreach="dashboard.statuses"
-                                                t-as="status"
-                                                t-key="status.index"
-                                            >
-
+                                            <t t-foreach="dashboard.statuses" t-as="status" t-key="status.index">
                                                 <button
                                                     type="button"
                                                     class="ngo-legend-item"
                                                     t-att-disabled="!state.canInteract"
                                                     t-on-click="() => this.openStatus(dashboard, status)"
+                                                    t-att-title="'View ' + status.label + ' records'"
                                                 >
-
                                                     <span
                                                         class="ngo-legend-dot"
                                                         t-att-style="'background-color: ' + getColor(status.index - 1, dashboard)"
                                                     />
-
                                                     <span class="ngo-legend-label">
                                                         <t t-esc="status.label"/>
                                                     </span>
-
-                                                    <strong>
-                                                        <t t-esc="status.count"/>
+                                                    <span class="ngo-legend-pct-pill">
+                                                        <t t-esc="status.percent"/>%
+                                                    </span>
+                                                    <strong class="ngo-legend-count">
+                                                        <t t-esc="formatNumber(status.count)"/>
                                                     </strong>
-
                                                 </button>
-
                                             </t>
-
                                         </div>
-
                                     </div>
-
                                 </t>
 
-
-                                <!-- HORIZONTAL BAR -->
-                                <t t-elif="
-                                    getChartType(dashboard) === 'horizontal_bar'
-                                ">
-
+                                <!-- HORIZONTAL BAR CHART -->
+                                <t t-elif="getChartType(dashboard) === 'horizontal_bar'">
                                     <div class="ngo-horizontal-chart">
-
-                                        <t
-                                            t-foreach="dashboard.statuses"
-                                            t-as="status"
-                                            t-key="status.index"
-                                        >
-
+                                        <t t-foreach="dashboard.statuses" t-as="status" t-key="status.index">
                                             <button
                                                 type="button"
                                                 class="ngo-horizontal-row"
                                                 t-att-disabled="!state.canInteract"
                                                 t-on-click="() => this.openStatus(dashboard, status)"
                                             >
-
                                                 <div class="ngo-horizontal-label">
-
-                                                    <span>
+                                                    <span class="ngo-bar-label-text">
                                                         <t t-esc="status.label"/>
                                                     </span>
-
-                                                    <strong>
-                                                        <t t-esc="status.count"/>
-                                                    </strong>
-
+                                                    <div class="ngo-bar-meta">
+                                                        <span class="ngo-bar-pct"><t t-esc="status.percent"/>%</span>
+                                                        <strong class="ngo-bar-count">
+                                                            <t t-esc="formatNumber(status.count)"/>
+                                                        </strong>
+                                                    </div>
                                                 </div>
-
                                                 <div class="ngo-horizontal-track">
-
                                                     <div
                                                         class="ngo-horizontal-fill"
                                                         t-att-style="getStatusStyle(status, dashboard)"
                                                     />
-
                                                 </div>
-
                                             </button>
-
                                         </t>
-
                                     </div>
-
                                 </t>
 
-
-                                <!-- VERTICAL BAR -->
-                                <t t-elif="
-                                    getChartType(dashboard) === 'vertical_bar'
-                                ">
-
+                                <!-- VERTICAL BAR CHART -->
+                                <t t-elif="getChartType(dashboard) === 'vertical_bar'">
                                     <div class="ngo-vertical-chart">
-
-                                        <t
-                                            t-foreach="dashboard.statuses"
-                                            t-as="status"
-                                            t-key="status.index"
-                                        >
-
+                                        <t t-foreach="dashboard.statuses" t-as="status" t-key="status.index">
                                             <button
                                                 type="button"
                                                 class="ngo-vertical-column"
                                                 t-att-disabled="!state.canInteract"
                                                 t-on-click="() => this.openStatus(dashboard, status)"
                                             >
-
                                                 <div class="ngo-vertical-value">
-                                                    <t t-esc="status.count"/>
+                                                    <t t-esc="formatNumber(status.count)"/>
                                                 </div>
-
                                                 <div class="ngo-vertical-track">
-
                                                     <div
                                                         class="ngo-vertical-fill"
-                                                        t-att-style="getBarStyle(
-                                                            status,
-                                                            dashboard.statuses,
-                                                            dashboard
-                                                        )"
+                                                        t-att-style="getBarStyle(status, dashboard.statuses, dashboard)"
                                                     />
-
                                                 </div>
-
                                                 <span class="ngo-vertical-label">
                                                     <t t-esc="status.label"/>
                                                 </span>
-
                                             </button>
-
                                         </t>
-
                                     </div>
-
                                 </t>
 
-
-                                <!-- STATUS -->
+                                <!-- STATUS LIST -->
                                 <t t-else="">
-
                                     <div class="ngo-status-chart">
-
-                                        <t
-                                            t-foreach="dashboard.statuses"
-                                            t-as="status"
-                                            t-key="status.index"
-                                        >
-
+                                        <t t-foreach="dashboard.statuses" t-as="status" t-key="status.index">
                                             <button
                                                 type="button"
                                                 class="ngo-status-row"
                                                 t-att-disabled="!state.canInteract"
                                                 t-on-click="() => this.openStatus(dashboard, status)"
                                             >
-
                                                 <div class="ngo-status-top">
-
-                                                    <span>
+                                                    <span class="ngo-status-name">
+                                                        <span class="ngo-status-dot-mini" t-att-style="'background:' + getColor(status.index - 1, dashboard)"></span>
                                                         <t t-esc="status.label"/>
                                                     </span>
-
-                                                    <strong>
-                                                        <t t-esc="status.count"/>
-                                                    </strong>
-
+                                                    <div class="ngo-status-badges">
+                                                        <span class="ngo-status-percent"><t t-esc="status.percent"/>%</span>
+                                                        <strong class="ngo-status-count"><t t-esc="formatNumber(status.count)"/></strong>
+                                                    </div>
                                                 </div>
-
                                                 <div class="ngo-status-track">
-
                                                     <div
                                                         class="ngo-status-fill"
                                                         t-att-style="getStatusStyle(status, dashboard)"
                                                     />
-
                                                 </div>
-
-                                                <span class="ngo-status-percent">
-                                                    <t t-esc="status.percent"/>%
-                                                </span>
-
                                             </button>
-
                                         </t>
-
                                     </div>
-
                                 </t>
-
                             </div>
 
-
-                            <!-- FOOTER -->
+                            <!-- PANEL FOOTER -->
                             <div class="ngo-panel-footer">
-
                                 <button
                                     type="button"
                                     class="ngo-view-records"
                                     t-att-disabled="!state.canInteract"
                                     t-on-click="() => this.openAll(dashboard)"
                                 >
-                                    View Records
+                                    <span>Explore Full Registry</span>
                                     <i class="fa fa-arrow-right"/>
                                 </button>
-
                             </div>
-
                         </section>
-
                     </t>
-
                 </div>
-
             </t>
-
         </div>
-
     </t>
 
 </templates>

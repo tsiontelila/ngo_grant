@@ -2,6 +2,7 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+from .workflow_access import check_cancellation_access, check_reset_access
 
 
 class NgoGrantProject(models.Model):
@@ -14,7 +15,7 @@ class NgoGrantProject(models.Model):
     
     _name = 'ngo.grant.project'
     _description = 'NGO Grant Project Allocation'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'ngo.cancellation.access.mixin']
     _rec_name = 'display_name'
     _order = 'sequence, id'
     
@@ -270,8 +271,16 @@ class NgoGrantProject(models.Model):
     
     def action_cancel(self):
         """Cancel allocation."""
-        self.write({'state': 'cancelled'})
-        self.message_post(body=_('Allocation cancelled.'))
+        check_cancellation_access(self)
+        self.sudo().with_context(allow_cancel_reset_state_change=True).write({'state': 'cancelled'})
+        self.sudo().message_post(body=_('Allocation cancelled.'))
+
+    def action_reset_cancelled(self):
+        check_reset_access(self)
+        if any(record.state != 'cancelled' for record in self):
+            raise ValidationError(_('Only cancelled project allocations can be reset to Draft.'))
+        self.sudo().with_context(allow_cancel_reset_state_change=True).write({'state': 'draft'})
+        self.sudo().message_post(body=_('Cancelled project allocation reset to Draft for revision.'))
     
     @api.model_create_multi
     def create(self, vals_list):

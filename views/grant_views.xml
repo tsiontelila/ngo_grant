@@ -30,32 +30,35 @@
                     <header>
                         <button name="action_submit" string="Submit" type="object" invisible="state != 'draft'" groups="ngo_grant.group_ngo_manager" class="btn-primary"/>
                         <button name="action_send_for_review" string="Send for Review" type="object" invisible="state != 'submitted'" groups="ngo_grant.group_ngo_manager" class="btn-primary"/>
-                        <button name="action_approve" string="Approve and Post" type="object" invisible="state not in ['submitted', 'under_review']" groups="ngo_grant.group_ngo_approver" class="btn-primary"/>
+                        <button name="action_approve" string="Approve" type="object" invisible="state not in ['submitted', 'under_review']" groups="ngo_grant.group_ngo_approver" class="btn-primary"/>
                         <button name="action_activate" string="Activate" type="object" invisible="state != 'approved'" groups="ngo_grant.group_ngo_manager" class="btn-primary"/>
                         <button name="%(ngo_grant.action_grant_amendment_wizard)d" string="Create Amendment" type="action" invisible="state not in ['approved', 'active']" groups="ngo_grant.group_ngo_manager" class="btn-warning" context="{'default_grant_id': id}"/>
                         <button name="%(ngo_grant.action_grant_export_wizard)d" string="Export / Download" type="action" class="btn-secondary" context="{'default_grant_id': id}"/>
                         <button name="action_suspend" string="Suspend" type="object" invisible="state != 'active'" groups="ngo_grant.group_ngo_manager" class="btn-secondary"/>
                         <button name="action_close" string="Close" type="object" invisible="state not in ['active', 'suspended', 'completed']" groups="ngo_grant.group_ngo_manager" class="btn-secondary"/>
-                        <button name="action_cancel" string="Cancel" type="object" invisible="state not in ['draft', 'submitted', 'under_review']" groups="ngo_grant.group_ngo_manager" class="btn-danger"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'" groups="ngo_grant.group_ngo_director,base.group_system" class="btn-danger"/>
+                        <button name="action_reset_cancelled" string="Reset to Draft" type="object" invisible="state != 'cancelled' or not can_reset_cancelled" class="btn-warning"/>
                         <field name="state" widget="statusbar" readonly="1" statusbar_visible="draft,submitted,under_review,approved,active,completed,closed,rejected,cancelled,suspended"/>
                     </header>
 
                     
                     <sheet>
+                        <field name="can_edit_approved" invisible="1"/>
+                        <field name="can_reset_cancelled" invisible="1"/>
                         <div class="oe_title">
                             <h1>
-                                <field name="grant_number" placeholder="Grant Number" readonly="state != 'draft'"/>
+                                <field name="grant_number" placeholder="Grant Number" readonly="state != 'draft' and not can_edit_approved"/>
                             </h1>
                             <h2>
-                                <field name="grant_name" placeholder="Grant Name" readonly="state != 'draft'"/>
+                                <field name="grant_name" placeholder="Grant Name" readonly="state != 'draft' and not can_edit_approved"/>
                             </h2>
                         </div>
                         
                         <group>
                             <group>
-                                <field name="short_name" readonly="state != 'draft'"/>
-                                <field name="currency_id" readonly="state != 'draft'"/>
-                                <field name="approved_amount" readonly="state != 'draft'"/>
+                                <field name="short_name" readonly="state != 'draft' and not can_edit_approved"/>
+                                <field name="currency_id" readonly="state != 'draft' and not can_edit_approved"/>
+                                <field name="approved_amount" readonly="state != 'draft' and not can_edit_approved"/>
                                 <field name="total_contributed_amount" readonly="1"/>
                                 <field name="remaining_contribution_amount" readonly="1"/>
                                 <field name="subgrant_amount" readonly="1"/>
@@ -63,28 +66,28 @@
                             <group>
                                 <field name="disbursed_amount" readonly="1"/>
                                 <field name="remaining_amount" readonly="1"/>
-                                <field name="funding_type_id" readonly="state != 'draft'"/>
-                                <field name="sector_id" readonly="state != 'draft'"/>
-                                <field name="program_area_id" domain="[('sector_id', '=', sector_id)]" readonly="state != 'draft'"/>
-                                <field name="company_id" readonly="state != 'draft'"/>
+                                <field name="funding_type_id" readonly="state != 'draft' and not can_edit_approved"/>
+                                <field name="sector_id" readonly="state != 'draft' and not can_edit_approved"/>
+                                <field name="program_area_id" domain="[('sector_id', '=', sector_id)]" readonly="state != 'draft' and not can_edit_approved"/>
+                                <field name="company_id" readonly="state != 'draft' and not can_edit_approved"/>
                             </group>
                         </group>
                         
                         <group>
                             <group string="Timeline">
-                                <field name="agreement_date" readonly="state != 'draft'"/>
-                                <field name="start_date" readonly="state != 'draft'"/>
-                                <field name="end_date" readonly="state != 'draft'"/>
-                                <field name="close_date" invisible="state != 'closed'"/>
+                                <field name="agreement_date" readonly="state != 'draft' and not can_edit_approved"/>
+                                <field name="start_date" readonly="state != 'draft' and not can_edit_approved"/>
+                                <field name="end_date" readonly="state != 'draft' and not can_edit_approved"/>
+                                <field name="close_date" invisible="state != 'closed'" readonly="not can_edit_approved"/>
                             </group>
                             <group string="Status">
                                 <field name="grant_stage" readonly="1"/>
-                                <field name="active" readonly="state != 'draft'"/>
+                                <field name="active" readonly="state != 'draft' and not can_edit_approved"/>
                             </group>
                         </group>
                         
                         <group>
-                            <field name="description" placeholder="Grant description..." readonly="state != 'draft'"/>
+                            <field name="description" placeholder="Grant description..." readonly="state != 'draft' and not can_edit_approved"/>
                         </group>
                         
                         <notebook>
@@ -170,7 +173,7 @@
                             </page>
                             
                             <page string="Donors">
-                                <field name="donor_line_ids" readonly="state not in ['draft', 'submitted']">
+                                <field name="donor_line_ids" readonly="state not in ['draft', 'submitted'] and not can_edit_approved">
                                     <list editable="bottom">
                                         <field name="donor_id"/>
                                         <field name="lead_donor"/>
@@ -179,12 +182,15 @@
                                         <field name="donor_reference"/>
                                         <field name="agreement_reference"/>
                                         <field name="state"/>
+                                        <field name="can_reset_cancelled" invisible="1"/>
+                                        <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'" groups="ngo_grant.group_ngo_director,base.group_system"/>
+                                        <button name="action_reset_cancelled" string="Reset to Draft" type="object" invisible="state != 'cancelled' or not can_reset_cancelled"/>
                                     </list>
                                 </field>
                             </page>
                             
                             <page string="Projects">
-                                <field name="project_ids" readonly="state != 'draft'">
+                                <field name="project_ids" readonly="state != 'draft' and not can_edit_approved">
                                     <list editable="bottom">
                                         <field name="project_id"/>
                                         <field name="allocation_amount"/>
@@ -223,7 +229,7 @@
                             </page>
                             
                             <page string="Documents">
-                                <field name="document_ids" readonly="state not in ['under_review', 'approved', 'active', 'completed']">
+                                <field name="document_ids" readonly="state in ['approved', 'active', 'suspended', 'completed', 'closed', 'rejected', 'cancelled'] and not can_edit_approved">
                                     <list>
                                         <field name="name"/>
                                         <field name="document_type"/>
@@ -246,7 +252,7 @@
                             </page>
                             
                             <page string="Compliance">
-                                <field name="compliance_ids" readonly="state not in ['under_review', 'approved', 'active', 'completed']">
+                                <field name="compliance_ids" readonly="state in ['approved', 'active', 'suspended', 'completed', 'closed', 'rejected', 'cancelled'] and not can_edit_approved">
                                     <list>
                                         <field name="name"/>
                                         <field name="compliance_type"/>
@@ -260,7 +266,7 @@
 
 
                             <page string="Conditions &amp; Milestones">
-                                <field name="milestone_ids" readonly="state not in ['under_review', 'approved', 'active', 'completed']">
+                                <field name="milestone_ids" readonly="state in ['approved', 'active', 'suspended', 'completed', 'closed', 'rejected', 'cancelled'] and not can_edit_approved">
                                     <list editable="bottom">
                                         <field name="name"/>
                                         <field name="target_date"/>
@@ -270,12 +276,15 @@
                                         <button name="action_submit" string="Submit" type="object" invisible="state != 'draft'" class="btn-sm btn-secondary"/>
                                         <button name="action_verify" string="Verify" type="object" invisible="state != 'submitted'" class="btn-sm btn-primary"/>
                                         <button name="action_release_funds" string="Release Funds" type="object" invisible="state != 'verified'" class="btn-sm btn-success"/>
+                                        <field name="can_reset_cancelled" invisible="1"/>
+                                        <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'" groups="ngo_grant.group_ngo_director,base.group_system"/>
+                                        <button name="action_reset_cancelled" string="Reset to Draft" type="object" invisible="state != 'cancelled' or not can_reset_cancelled"/>
                                     </list>
                                 </field>
                             </page>
 
                             <page string="Approval Chain" groups="ngo_grant.group_ngo_manager">
-                                <field name="approval_step_ids" readonly="state != 'draft'">
+                                <field name="approval_step_ids" readonly="state != 'draft' and not can_edit_approved">
                                     <list editable="bottom">
                                         <field name="sequence"/>
                                         <field name="name"/>

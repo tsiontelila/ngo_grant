@@ -2,6 +2,7 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, ValidationError
+from .workflow_access import check_cancellation_access, check_reset_access
 
 
 class NgoGrant(models.Model):
@@ -13,7 +14,7 @@ class NgoGrant(models.Model):
     
     _name = 'ngo.grant'
     _description = 'NGO Grant'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'ngo.cancellation.access.mixin']
     _rec_name = 'grant_name'
     _order = 'grant_number desc'
     
@@ -41,6 +42,7 @@ class NgoGrant(models.Model):
     
     description = fields.Text(
         string='Description',
+        tracking=True,
         help='Grant description',
     )
     
@@ -214,8 +216,16 @@ class NgoGrant(models.Model):
     active = fields.Boolean(
         string='Active',
         default=True,
+        tracking=True,
         help='Whether the grant is active',
     )
+
+    can_edit_approved = fields.Boolean(compute='_compute_can_edit_approved')
+
+    @api.depends_context('uid')
+    def _compute_can_edit_approved(self):
+        for grant in self:
+            grant.can_edit_approved = False
 
     # Organization
     company_id = fields.Many2one(
@@ -478,9 +488,15 @@ class NgoGrant(models.Model):
         self.message_post(body=_('Grant sent for under review.'))
     
     def action_approve(self):
-        """Approve grant."""
-        self._check_manager_access()
-        self.with_context(allow_workflow_state_change=True).write({'state': 'approved'})
+        """Allow an NGO Grant Approver to approve the submitted grant."""
+        if not self.env.user.has_group('ngo_grant.group_ngo_approver'):
+            raise AccessError(_('Only NGO Grant Approvers can approve grants.'))
+        for grant in self:
+            if grant.state not in ('submitted', 'under_review'):
+                raise ValidationError(_('Only submitted or reviewed grants can be approved.'))
+        # Approvers intentionally have read-only model ACLs. Grant this single
+        # workflow action permission to write only the approved state.
+        self.sudo().with_context(allow_workflow_state_change=True).write({'state': 'approved'})
         self.message_post(body=_('Grant approved.'))
     
     def action_activate(self):
@@ -492,19 +508,19 @@ class NgoGrant(models.Model):
                 total_contribution = sum(grant.donor_line_ids.mapped('contribution_amount'))
                 if abs(total_contribution - grant.approved_amount) > 0.01:
                     raise ValidationError(_('Total donor contributions must equal the approved amount before activation.'))
-        self.with_context(allow_workflow_state_change=True).write({'state': 'active', 'active': True})
+        self.sudo().with_context(allow_workflow_state_change=True).write({'state': 'active', 'active': True})
         self.message_post(body=_('Grant activated.'))
     
     def action_suspend(self):
         """Suspend grant."""
         self._check_manager_access()
-        self.with_context(allow_workflow_state_change=True).write({'state': 'suspended'})
+        self.sudo().with_context(allow_workflow_state_change=True).write({'state': 'suspended'})
         self.message_post(body=_('Grant suspended.'))
     
     def action_close(self):
         """Close grant."""
         self._check_manager_access()
-        self.with_context(allow_workflow_state_change=True).write({
+        self.sudo().with_context(allow_workflow_state_change=True).write({
             'state': 'closed',
             'close_date': fields.Date.today(),
             'active': False,
@@ -513,9 +529,18 @@ class NgoGrant(models.Model):
     
     def action_cancel(self):
         """Cancel grant."""
-        self._check_manager_access()
-        self.with_context(allow_workflow_state_change=True).write({'state': 'cancelled', 'active': False})
-        self.message_post(body=_('Grant cancelled.'))
+        check_cancellation_access(self)
+        self.sudo().with_context(allow_workflow_state_change=True, allow_cancel_reset_state_change=True).write({'state': 'cancelled'})
+        self.sudo().message_post(body=_('Grant cancelled.'))
+
+    def action_reset_cancelled(self):
+        check_reset_access(self)
+        if any(grant.state != 'cancelled' for grant in self):
+            raise ValidationError(_('Only cancelled grants can be reset to Draft.'))
+        self.sudo().with_context(allow_workflow_state_change=True, allow_cancel_reset_state_change=True).write({
+            'state': 'draft', 'active': True,
+        })
+        self.sudo().message_post(body=_('Cancelled grant reset to Draft for revision.'))
     
     def _check_manager_access(self):
         if not self.env.is_admin() and not self.env.user.has_group('ngo_grant.group_ngo_manager'):
@@ -595,14 +620,27 @@ class NgoGrant(models.Model):
         """Enforce lifecycle rules and record immutable audit logs."""
         if 'state' in vals and not self.env.context.get('allow_workflow_state_change'):
             raise AccessError(_('Grant state can only be changed through the workflow actions.'))
+        is_system_admin = self.env.is_admin() or self.env.su or self.env.user.has_group('base.group_system')
         allowed_after_draft = {
             'state', 'active', 'close_date',
             'amendment_ids', 'disbursement_ids', 'grant_stage',
             'donor_reference', 'total_contributed_amount',
             'remaining_contribution_amount', 'disbursed_amount',
         }
-        if not self.env.context.get('skip_donor_contribution_check'):
-            for grant in self:
+        for grant in self:
+            if grant.state in ('approved', 'active', 'suspended', 'completed', 'closed', 'rejected', 'cancelled') and not self.env.su:
+                amendment_fields = {'approved_amount', 'end_date'}
+                if self.env.context.get('skip_donor_contribution_check') and set(vals) <= amendment_fields:
+                    continue
+                if vals.get('state') == 'draft':
+                    raise AccessError(_('Cancel the approved grant before resetting it to Draft.'))
+                internal_fields = {'state', 'grant_stage'}
+                if set(vals) - internal_fields:
+                    raise AccessError(_('Approved grant details are locked. Cancel the grant and reset it to Draft before editing.'))
+                continue
+            if not is_system_admin:
+                if self.env.context.get('skip_donor_contribution_check'):
+                    continue
                 permitted_fields = set(allowed_after_draft)
                 blocked_fields = set(vals) - permitted_fields
                 if grant.state != 'draft' and blocked_fields:
@@ -612,7 +650,7 @@ class NgoGrant(models.Model):
                     )
         if 'state' in vals:
             for grant in self:
-                if grant.state == 'closed' and vals['state'] != 'closed':
+                if grant.state == 'closed' and vals['state'] != 'closed' and not (self.env.su and vals['state'] == 'cancelled'):
                     raise ValidationError(_('Closed grants cannot be modified.'))
         
         # Log old values for audit trail

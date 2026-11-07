@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
+from .workflow_access import check_cancellation_access, check_reset_access
 
 
 class NgoGrantCompliance(models.Model):
@@ -12,14 +13,20 @@ class NgoGrantCompliance(models.Model):
     
     _name = 'ngo.grant.compliance'
     _description = 'NGO Grant Compliance'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'ngo.cancellation.access.mixin']
     _order = 'due_date, priority desc'
+
+    def init(self):
+        """Move legacy subgrant compliance items out of their parent grant."""
+        self.env.cr.execute(
+            f'UPDATE "{self._table}" SET grant_id = NULL WHERE subgrant_id IS NOT NULL AND grant_id IS NOT NULL'
+        )
     
     # References
     grant_id = fields.Many2one(
         'ngo.grant',
         string='Grant',
-        required=True,
+        required=False,
         ondelete='cascade',
         tracking=True,
         help='Associated grant',
@@ -76,6 +83,7 @@ class NgoGrantCompliance(models.Model):
         ('completed', 'Completed'),
         ('overdue', 'Overdue'),
         ('waived', 'Waived'),
+        ('rejected', 'Rejected'),
         ('cancelled', 'Cancelled'),
     ],
         string='State',
@@ -123,11 +131,13 @@ class NgoGrantCompliance(models.Model):
     # Details
     description = fields.Text(
         string='Description',
+        tracking=True,
         help='Detailed description of the requirement',
     )
     
     requirements = fields.Text(
         string='Requirements',
+        tracking=True,
         help='Specific requirements to meet compliance',
     )
     
@@ -138,9 +148,19 @@ class NgoGrantCompliance(models.Model):
         string='Evidence Documents',
         help='Documents supporting compliance',
     )
+    subgrant_evidence_document_ids = fields.One2many(
+        'ngo.grant.document', 'compliance_id',
+        string='Subgrant Evidence Documents',
+        domain=[('subgrant_id', '!=', False)],
+    )
+    subgrant_legacy_document_ids = fields.One2many(
+        'ngo.subgrant.document', 'compliance_id',
+        string='Existing Subgrant Evidence Documents',
+    )
     
     notes = fields.Text(
         string='Notes',
+        tracking=True,
         help='Additional notes',
     )
     
@@ -201,21 +221,46 @@ class NgoGrantCompliance(models.Model):
     
     verification_notes = fields.Text(
         string='Verification Notes',
+        tracking=True,
         help='Notes from verification',
     )
     
-    @api.constrains('grant_id', 'name')
-    def _check_name_unique_per_grant(self):
-        """Ensure compliance name is unique per grant."""
+    @api.onchange('grant_id')
+    def _onchange_grant_id(self):
+        if self.grant_id:
+            self.subgrant_id = False
+
+    @api.onchange('subgrant_id')
+    def _onchange_subgrant_id(self):
+        if self.subgrant_id:
+            self.grant_id = False
+
+    @api.constrains('grant_id', 'subgrant_id')
+    def _check_single_owner(self):
         for compliance in self:
-            if compliance.grant_id and compliance.name:
+            if bool(compliance.grant_id) == bool(compliance.subgrant_id):
+                raise ValidationError(_('Select either a Grant or a Subgrant for compliance, not both.'))
+
+    @api.constrains('grant_id', 'subgrant_id', 'name')
+    def _check_name_unique_per_owner(self):
+        """Ensure compliance name is unique within its grant or subgrant."""
+        for compliance in self:
+            if compliance.name and compliance.grant_id:
                 existing = self.search([
                     ('grant_id', '=', compliance.grant_id.id),
                     ('name', '=', compliance.name),
                     ('id', '!=', compliance.id),
                 ])
-                if existing:
-                    raise ValidationError(_('Compliance requirement name must be unique per grant!'))
+            elif compliance.name and compliance.subgrant_id:
+                existing = self.search([
+                    ('subgrant_id', '=', compliance.subgrant_id.id),
+                    ('name', '=', compliance.name),
+                    ('id', '!=', compliance.id),
+                ])
+            else:
+                existing = self.browse()
+            if existing:
+                raise ValidationError(_('Compliance requirement name must be unique within its grant or subgrant.'))
     
     @api.depends('due_date', 'completed_date')
     def _compute_is_overdue(self):
@@ -254,6 +299,15 @@ class NgoGrantCompliance(models.Model):
                     pass
     
     # Business Methods
+    def write(self, vals):
+        locked_states = ('completed', 'cancelled')
+        if not self.env.su and 'state' in vals and vals['state'] != 'cancelled' and any(record.state in locked_states for record in self):
+            raise AccessError(_('Approved compliance cannot be changed until an administrator cancels it.'))
+        if not self.env.su and set(vals) - {'state', 'reminder_sent', 'reminder_count'}:
+            if any(record.state in locked_states for record in self):
+                raise AccessError(_('Approved compliance details are locked. An administrator must cancel the item before it can be reset and edited.'))
+        return super().write(vals)
+
     def action_start(self):
         """Mark as in progress."""
         self.write({'state': 'in_progress'})
@@ -274,8 +328,24 @@ class NgoGrantCompliance(models.Model):
     
     def action_reject(self):
         """Reject compliance."""
-        self.write({'state': 'cancelled'})
+        self.write({'state': 'rejected'})
         self.message_post(body=_('Compliance rejected.'))
+
+    def action_cancel(self):
+        check_cancellation_access(self)
+        self.sudo().with_context(allow_cancel_reset_state_change=True).write({'state': 'cancelled'})
+        self.sudo().message_post(body=_('Compliance cancelled.'))
+
+    def action_reset_cancelled(self):
+        check_reset_access(self)
+        for record in self:
+            if record.state != 'cancelled':
+                raise ValidationError(_('Only cancelled compliance items can be reset to Draft.'))
+        self.sudo().with_context(allow_cancel_reset_state_change=True).write({
+            'state': 'draft', 'completed_date': False, 'verified': False,
+            'verified_by': False, 'verified_date': False,
+        })
+        self.sudo().message_post(body=_('Cancelled compliance item reset to Draft for revision.'))
     
     def action_waive(self):
         """Waive compliance."""

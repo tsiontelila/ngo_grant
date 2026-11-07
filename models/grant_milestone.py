@@ -2,6 +2,7 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
+from .workflow_access import check_cancellation_access, check_reset_access
 
 
 class NgoGrantMilestone(models.Model):
@@ -9,7 +10,7 @@ class NgoGrantMilestone(models.Model):
 
     _name = 'ngo.grant.milestone'
     _description = 'NGO Grant Milestone & Release Condition'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'ngo.cancellation.access.mixin']
     _order = 'target_date, id'
 
     grant_id = fields.Many2one(
@@ -68,6 +69,20 @@ class NgoGrantMilestone(models.Model):
         readonly=True,
         help='Disbursement generated upon achieving this milestone',
     )
+
+    def action_cancel(self):
+        check_cancellation_access(self)
+        self.sudo().with_context(allow_cancel_reset_state_change=True).write({'state': 'cancelled'})
+        for milestone in self:
+            milestone.grant_id.sudo().message_post(body=_('Milestone %s cancelled.') % milestone.name)
+
+    def action_reset_cancelled(self):
+        check_reset_access(self)
+        if any(milestone.state != 'cancelled' for milestone in self):
+            raise UserError(_('Only cancelled milestones can be reset to Draft.'))
+        self.sudo().with_context(allow_cancel_reset_state_change=True).write({'state': 'draft', 'completion_date': False})
+        for milestone in self:
+            milestone.grant_id.sudo().message_post(body=_('Cancelled milestone %s reset to Draft for revision.') % milestone.name)
 
     def action_submit(self):
         self.write({'state': 'submitted'})

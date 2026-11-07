@@ -5,6 +5,10 @@ access_ngo_grant_dashboard_officer,ngo.grant.dashboard officer,model_ngo_grant_d
 access_ngo_subgrant_public,ngo.subgrant public,model_ngo_subgrant,base.group_user,1,0,0,0
 access_ngo_subgrant_manager,ngo.subgrant manager,model_ngo_subgrant,group_ngo_manager,1,1,1,0
 access_ngo_subgrant_officer,ngo.subgrant officer,model_ngo_subgrant,group_ngo_grant_officer,1,1,1,0
+access_ngo_subgrant_director,ngo.subgrant director,model_ngo_subgrant,group_ngo_director,1,0,0,0
+access_ngo_subgrant_approver,ngo.subgrant approver,model_ngo_subgrant,group_ngo_approver,1,0,0,0
+access_ngo_subgrant_user,ngo.subgrant data entry,model_ngo_subgrant,group_ngo_user,1,0,0,0
+access_ngo_subgrant_read,ngo.subgrant viewer,model_ngo_subgrant,group_ngo_grant_read,1,0,0,0
 access_ngo_subgrant_amendment_user,ngo.subgrant.amendment user,model_ngo_subgrant_amendment,base.group_user,1,0,0,0
 access_ngo_subgrant_amendment_manager,ngo.subgrant.amendment manager,model_ngo_subgrant_amendment,group_ngo_manager,1,1,1,0
 access_ngo_subgrant_amendment_officer,ngo.subgrant.amendment officer,model_ngo_subgrant_amendment,group_ngo_grant_officer,1,1,1,0
@@ -13,12 +17,10 @@ access_ngo_subgrant_disbursement_user,ngo.subgrant.disbursement user,model_ngo_s
 access_ngo_subgrant_disbursement_manager,ngo.subgrant.disbursement manager,model_ngo_subgrant_disbursement,group_ngo_manager,1,1,1,0
 access_ngo_subgrant_disbursement_officer,ngo.subgrant.disbursement officer,model_ngo_subgrant_disbursement,group_ngo_grant_officer,1,1,1,0
 access_ngo_subgrant_disbursement_approver,ngo.subgrant.disbursement approver,model_ngo_subgrant_disbursement,group_ngo_approver,1,1,0,0
+access_ngo_subgrant_disbursement_approval_step_user,ngo.subgrant.disbursement.approval.step user,model_ngo_subgrant_disbursement_approval_step,base.group_user,1,0,0,0
 access_ngo_subgrant_document_user,ngo.subgrant.document user,model_ngo_subgrant_document,base.group_user,1,0,0,0
 access_ngo_subgrant_document_manager,ngo.subgrant.document manager,model_ngo_subgrant_document,group_ngo_manager,1,1,1,0
 access_ngo_subgrant_document_officer,ngo.subgrant.document officer,model_ngo_subgrant_document,group_ngo_grant_officer,1,1,1,0
-access_ngo_subgrant_donor_line_user,ngo.subgrant.donor.line user,model_ngo_subgrant_donor_line,base.group_user,1,0,0,0
-access_ngo_subgrant_donor_line_manager,ngo.subgrant.donor.line manager,model_ngo_subgrant_donor_line,group_ngo_manager,1,1,1,0
-access_ngo_subgrant_donor_line_officer,ngo.subgrant.donor.line officer,model_ngo_subgrant_donor_line,group_ngo_grant_officer,1,1,1,0
 access_ngo_grant_donor_category_public,ngo.grant.donor.category public,model_ngo_grant_donor_category,base.group_user,1,0,0,0
 access_ngo_grant_disbursement_public,ngo.grant.disbursement public,model_ngo_grant_disbursement,base.group_user,1,0,0,0
 access_ngo_grant_donor_public,ngo.grant.donor public,model_ngo_grant_donor,base.group_user,1,0,0,0

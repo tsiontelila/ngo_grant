@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from dateutil.relativedelta import relativedelta
+from .workflow_access import check_cancellation_access, check_reset_access
 
 
 class NgoGrantReportingSchedule(models.Model):
@@ -14,7 +15,7 @@ class NgoGrantReportingSchedule(models.Model):
     
     _name = 'ngo.grant.reporting.schedule'
     _description = 'NGO Grant Reporting Schedule'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'ngo.cancellation.access.mixin']
     _order = 'report_date'
     _rec_name = 'name'
     
@@ -26,6 +27,10 @@ class NgoGrantReportingSchedule(models.Model):
         ondelete='cascade',
         tracking=True,
         help='Associated grant',
+    )
+    subgrant_id = fields.Many2one(
+        'ngo.subgrant', string='Subgrant', ondelete='cascade', tracking=True,
+        help='Optional subgrant this reporting schedule applies to',
     )
     
     # Identification
@@ -87,6 +92,22 @@ class NgoGrantReportingSchedule(models.Model):
         tracking=True,
         help='Date when report is due',
     )
+
+    @api.onchange('grant_id')
+    def _onchange_grant_id_subgrant(self):
+        if self.subgrant_id and self.subgrant_id.grant_id != self.grant_id:
+            self.subgrant_id = False
+
+    @api.onchange('subgrant_id')
+    def _onchange_subgrant_id_grant(self):
+        if self.subgrant_id:
+            self.grant_id = self.subgrant_id.grant_id
+
+    @api.constrains('grant_id', 'subgrant_id')
+    def _check_subgrant_parent(self):
+        for schedule in self:
+            if schedule.subgrant_id and schedule.subgrant_id.grant_id != schedule.grant_id:
+                raise ValidationError(_('The selected subgrant must belong to the selected grant.'))
     
     submitted_date = fields.Date(
         string='Submitted Date',
@@ -300,6 +321,16 @@ class NgoGrantReportingSchedule(models.Model):
                     pass
     
     # Business Methods
+    def write(self, vals):
+        operational_fields = {'state', 'reminder_sent', 'reminder_count', 'is_overdue', 'days_overdue', 'days_until_due'}
+        locked_states = ('accepted', 'completed', 'cancelled')
+        if not self.env.su and 'state' in vals and vals['state'] != 'cancelled' and any(record.state in locked_states for record in self):
+            raise AccessError(_('Approved reporting schedules cannot be changed until an administrator cancels them.'))
+        if not self.env.su and set(vals) - operational_fields:
+            if any(record.state in locked_states for record in self):
+                raise AccessError(_('Approved reporting details are locked. An administrator must cancel the schedule before it can be reset and edited.'))
+        return super().write(vals)
+
     def action_start(self):
         """Mark as in preparation."""
         self.write({'state': 'in_preparation'})
@@ -322,6 +353,22 @@ class NgoGrantReportingSchedule(models.Model):
         """Reject report."""
         self.write({'state': 'rejected'})
         self.message_post(body=_('Report rejected.'))
+
+    def action_cancel(self):
+        check_cancellation_access(self)
+        self.sudo().with_context(allow_cancel_reset_state_change=True).write({'state': 'cancelled'})
+        self.sudo().message_post(body=_('Reporting schedule cancelled.'))
+
+    def action_reset_cancelled(self):
+        check_reset_access(self)
+        for record in self:
+            if record.state != 'cancelled':
+                raise ValidationError(_('Only cancelled reporting schedules can be reset to Draft.'))
+        self.sudo().with_context(allow_cancel_reset_state_change=True).write({
+            'state': 'draft', 'submitted_date': False, 'submitted_by': False,
+            'donor_response_date': False, 'approved_by': False,
+        })
+        self.sudo().message_post(body=_('Cancelled reporting schedule reset to Draft for revision.'))
     
     def action_waive(self):
         """Waive report."""

@@ -110,6 +110,9 @@
                                         <field name="contribution_amount"/>
                                         <field name="contribution_percentage"/>
                                         <field name="state"/>
+                                        <field name="can_reset_cancelled" invisible="1"/>
+                                        <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'" groups="ngo_grant.group_ngo_director,base.group_system"/>
+                                        <button name="action_reset_cancelled" string="Reset to Draft" type="object" invisible="state != 'cancelled' or not can_reset_cancelled"/>
                                     </list>
                                 </field>
                             </page>

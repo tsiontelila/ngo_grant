@@ -51,7 +51,7 @@
             <field name="subject">Compliance Due: {{ object.name }}</field>
             <field name="body_html" type="html">
                 <p>Dear {{ object.responsible_id.name or 'Responsible User' }},</p>
-                <p>This is a reminder that the compliance requirement <strong>{{ object.name }}</strong> for grant {{ object.grant_id.grant_number }} is due on {{ object.due_date }}.</p>
+                <p>This is a reminder that the compliance requirement <strong>{{ object.name }}</strong> for {{ 'grant ' + object.grant_id.grant_number if object.grant_id else 'subgrant ' + object.subgrant_id.grant_number }} is due on {{ object.due_date }}.</p>
                 <p>Compliance Details:</p>
                 <ul>
                     <li>Type: {{ object.compliance_type }}</li>
@@ -60,7 +60,7 @@
                 </ul>
                 <p>Please ensure this is completed on time.</p>
             </field>
-            <field name="email_from">{{ object.grant_id.company_id.email or 'noreply@example.com' }}</field>
+            <field name="email_from">{{ (object.grant_id.company_id.email if object.grant_id else object.subgrant_id.company_id.email) or 'noreply@example.com' }}</field>
             <field name="lang">en_US</field>
             <field name="auto_delete" eval="True"/>
         </record>

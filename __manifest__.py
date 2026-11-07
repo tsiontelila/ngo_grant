@@ -2,7 +2,7 @@
 
 {
     'name': 'NGO Grant Management',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.22.0',
     'category': 'NGO',
     'summary': 'Grant lifecycle management, donor management, and project funding',
     'description': """

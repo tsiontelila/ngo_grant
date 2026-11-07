@@ -2,6 +2,7 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, ValidationError
+from .workflow_access import check_cancellation_access, check_reset_access
 
 
 class NgoGrantDonorLine(models.Model):
@@ -14,7 +15,7 @@ class NgoGrantDonorLine(models.Model):
     
     _name = 'ngo.grant.donor.line'
     _description = 'NGO Grant Donor Allocation'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'ngo.cancellation.access.mixin']
     _rec_name = 'display_name'
     _order = 'lead_donor desc, contribution_amount desc'
     
@@ -123,16 +124,19 @@ class NgoGrantDonorLine(models.Model):
     
     procurement_restrictions = fields.Text(
         string='Procurement Restrictions',
+        tracking=True,
         help='Any procurement restrictions from this donor',
     )
     
     funding_conditions = fields.Text(
         string='Funding Conditions',
+        tracking=True,
         help='Conditions attached to this funding',
     )
     
     cost_sharing_notes = fields.Text(
         string='Cost Sharing Notes',
+        tracking=True,
         help='Notes about cost-sharing arrangements',
     )
     
@@ -154,6 +158,7 @@ class NgoGrantDonorLine(models.Model):
     active = fields.Boolean(
         string='Active',
         default=True,
+        tracking=True,
         help='Whether this allocation is active',
     )
     
@@ -277,6 +282,8 @@ class NgoGrantDonorLine(models.Model):
     # Business Methods
     def _check_contribution_editable(self):
         for line in self:
+            if self.env.context.get('allow_cancel_reset_state_change'):
+                continue
             if line.grant_id.state not in ('draft', 'submitted'):
                 raise AccessError(
                     _('Donor contributions can only be changed before the grant enters Under Review.')
@@ -296,7 +303,16 @@ class NgoGrantDonorLine(models.Model):
     
     def action_cancel(self):
         """Cancel allocation."""
-        self.write({'state': 'cancelled', 'active': False})
+        check_cancellation_access(self)
+        self.sudo().with_context(allow_cancel_reset_state_change=True).write({'state': 'cancelled'})
+        self.sudo().message_post(body=_('Donor allocation cancelled.'))
+
+    def action_reset_cancelled(self):
+        check_reset_access(self)
+        if any(line.state != 'cancelled' for line in self):
+            raise ValidationError(_('Only cancelled donor allocations can be reset to Draft.'))
+        self.sudo().with_context(allow_cancel_reset_state_change=True).write({'state': 'draft', 'active': True})
+        self.sudo().message_post(body=_('Cancelled donor allocation reset to Draft for revision.'))
     
     @api.model_create_multi
     def create(self, vals_list):

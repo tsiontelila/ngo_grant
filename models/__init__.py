@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from . import workflow_access
 from . import donor
 from . import donor_category
 from . import donor_line

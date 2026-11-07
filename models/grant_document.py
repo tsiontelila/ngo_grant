@@ -3,6 +3,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, ValidationError
 from dateutil.relativedelta import relativedelta
+from .workflow_access import check_cancellation_access, check_reset_access
 
 class NgoGrantDocument(models.Model):
     """NGO Grant Document model.
@@ -12,17 +13,21 @@ class NgoGrantDocument(models.Model):
     
     _name = 'ngo.grant.document'
     _description = 'NGO Grant Document'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'ngo.cancellation.access.mixin']
     _order = 'document_date desc'
     
     # References
     grant_id = fields.Many2one(
         'ngo.grant',
         string='Grant',
-        required=True,
+        required=False,
         ondelete='cascade',
         tracking=True,
         help='Associated grant',
+    )
+    subgrant_id = fields.Many2one(
+        'ngo.subgrant', string='Subgrant', ondelete='cascade', tracking=True,
+        help='Associated subgrant; choose this instead of a grant for subgrant documents.',
     )
     
     amendment_id = fields.Many2one(
@@ -48,6 +53,49 @@ class NgoGrantDocument(models.Model):
         tracking=True,
         help='Associated reporting schedule (if applicable)',
     )
+
+    @api.onchange('grant_id')
+    def _onchange_grant_id(self):
+        if self.grant_id:
+            self.subgrant_id = False
+
+    @api.onchange('subgrant_id')
+    def _onchange_subgrant_id(self):
+        if self.subgrant_id:
+            self.grant_id = False
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            compliance_id = vals.get('compliance_id') or self.env.context.get('default_compliance_id')
+            schedule_id = vals.get('reporting_schedule_id') or self.env.context.get('default_reporting_schedule_id')
+            if compliance_id:
+                compliance = self.env['ngo.grant.compliance'].browse(compliance_id)
+                if compliance.subgrant_id:
+                    vals['subgrant_id'] = compliance.subgrant_id.id
+                    vals['grant_id'] = False
+                elif compliance.grant_id:
+                    vals['grant_id'] = compliance.grant_id.id
+                    vals['subgrant_id'] = False
+            elif schedule_id:
+                schedule = self.env['ngo.grant.reporting.schedule'].browse(schedule_id)
+                vals['grant_id'] = False if schedule.subgrant_id else schedule.grant_id.id
+                vals['subgrant_id'] = schedule.subgrant_id.id or False
+        return super().create(vals_list)
+
+    @api.constrains('grant_id', 'subgrant_id', 'compliance_id', 'reporting_schedule_id')
+    def _check_document_owner(self):
+        for document in self:
+            if bool(document.grant_id) == bool(document.subgrant_id):
+                raise ValidationError(_('Select either a Grant or a Subgrant for this document.'))
+            if document.compliance_id:
+                if document.compliance_id.grant_id != document.grant_id or document.compliance_id.subgrant_id != document.subgrant_id:
+                    raise ValidationError(_('The document owner must match its compliance item.'))
+            if document.reporting_schedule_id:
+                schedule = document.reporting_schedule_id
+                expected_grant = schedule.grant_id if not schedule.subgrant_id else self.env['ngo.grant']
+                if document.grant_id != expected_grant or document.subgrant_id != schedule.subgrant_id:
+                    raise ValidationError(_('The document owner must match its reporting schedule.'))
     
     # Identification
     document_number = fields.Char(
@@ -208,6 +256,7 @@ class NgoGrantDocument(models.Model):
         ('archived', 'Archived'),
         ('rejected', 'Rejected'),
         ('expired', 'Expired'),
+        ('cancelled', 'Cancelled'),
     ],
         string='State',
         default='draft',
@@ -218,6 +267,7 @@ class NgoGrantDocument(models.Model):
     # Details
     description = fields.Text(
         string='Description',
+        tracking=True,
         help='Document description',
     )
     
@@ -232,12 +282,14 @@ class NgoGrantDocument(models.Model):
     is_public = fields.Boolean(
         string='Public',
         default=False,
+        tracking=True,
         help='Whether document is publicly accessible',
     )
     
     is_confidential = fields.Boolean(
         string='Confidential',
         default=False,
+        tracking=True,
         help='Whether document is confidential',
     )
     
@@ -279,6 +331,7 @@ class NgoGrantDocument(models.Model):
     # Notes
     notes = fields.Text(
         string='Notes',
+        tracking=True,
         help='Additional notes',
     )
     
@@ -382,8 +435,24 @@ class NgoGrantDocument(models.Model):
     def action_mark_expired(self):
         """Mark as expired."""
         self._check_manager_access()
-        self.with_context(allow_document_workflow_change=True).write({'state': 'expired'})
+        self.sudo().with_context(allow_document_workflow_change=True).write({'state': 'expired'})
         self.message_post(body=_('Document marked as expired.'))
+
+    def action_cancel(self):
+        """Cancel the document without deleting its record or file."""
+        check_cancellation_access(self)
+        self.sudo().with_context(allow_document_workflow_change=True, allow_cancel_reset_state_change=True).write({'state': 'cancelled'})
+        self.sudo().message_post(body=_('Document cancelled.'))
+
+    def action_reset_cancelled(self):
+        """Return a cancelled document to Draft for its responsible user."""
+        check_reset_access(self)
+        if any(document.state != 'cancelled' for document in self):
+            raise ValidationError(_('Only cancelled documents can be reset to Draft.'))
+        self.sudo().with_context(allow_document_workflow_change=True, allow_cancel_reset_state_change=True).write({
+            'state': 'draft', 'approved': False, 'approved_by': False, 'approval_date': False,
+        })
+        self.sudo().message_post(body=_('Cancelled document reset to Draft for revision.'))
 
     def _check_manager_access(self):
         if not self.env.is_admin() and not self.env.user.has_group('ngo_grant.group_ngo_manager'):
@@ -408,6 +477,13 @@ class NgoGrantDocument(models.Model):
         protected_fields = {'state', 'approved', 'approved_by', 'approval_date'}
         if protected_fields.intersection(vals) and not self.env.context.get('allow_document_workflow_change'):
             raise AccessError(_('Document approval status can only be changed through the workflow actions.'))
+        locked_states = ('approved', 'active', 'archived', 'expired', 'cancelled')
+        if not self.env.su:
+            if any(document.state in locked_states for document in self):
+                if 'state' in vals and vals['state'] != 'cancelled':
+                    raise AccessError(_('Approved documents cannot be changed until an administrator cancels them.'))
+                if set(vals) - {'state'}:
+                    raise AccessError(_('Approved document details are locked. An administrator must cancel the document before it can be reset and edited.'))
         return super().write(vals)
     
     @api.model
@@ -433,7 +509,7 @@ class NgoGrantDocument(models.Model):
         ])
         
         for document in expired_documents:
-            document.with_context(allow_document_workflow_change=True).write({'state': 'expired'})
+            document.sudo().with_context(allow_document_workflow_change=True).write({'state': 'expired'})
             document.message_post(
                 body=_('Document expired on %(date)s') % {'date': document.expiry_date}
             )

@@ -7,10 +7,11 @@
             <field name="name">ngo.grant.document.tree</field>
             <field name="model">ngo.grant.document</field>
             <field name="arch" type="xml">
-                <list string="Grant Documents">
+                <list string="Grant and Subgrant Documents">
                     <field name="name"/>
                     <field name="document_type"/>
                     <field name="grant_id"/>
+                    <field name="subgrant_id"/>
                     <field name="document_date"/>
                     <field name="expiry_date"/>
                     <field name="state"/>
@@ -23,68 +24,72 @@
             <field name="name">ngo.grant.document.form</field>
             <field name="model">ngo.grant.document</field>
             <field name="arch" type="xml">
-                <form string="Grant Document">
+                <form string="Grant or Subgrant Document">
                     <header>
                         <button name="action_submit" string="Submit" type="object" invisible="state != 'draft'" groups="ngo_grant.group_ngo_manager" class="btn-primary"/>
                         <button name="action_approve" string="Approve" type="object" invisible="state != 'submitted'" groups="ngo_grant.group_ngo_manager" class="btn-primary"/>
                         <button name="action_reject" string="Reject" type="object" invisible="state != 'submitted'" groups="ngo_grant.group_ngo_manager" class="btn-danger"/>
                         <button name="action_mark_expired" string="Mark Expired" type="object" invisible="state != 'approved'" groups="ngo_grant.group_ngo_manager" class="btn-secondary"/>
-                        <field name="state" widget="statusbar" readonly="1" statusbar_visible="draft,submitted,approved,active,archived,rejected,expired"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'" groups="ngo_grant.group_ngo_director,base.group_system" class="btn-secondary"/>
+                        <button name="action_reset_cancelled" string="Reset to Draft" type="object" invisible="state != 'cancelled' or not can_reset_cancelled" class="btn-warning"/>
+                        <field name="state" widget="statusbar" readonly="1" statusbar_visible="draft,submitted,approved,active,archived,rejected,expired,cancelled"/>
                     </header>
                     
                     <sheet>
+                        <field name="can_reset_cancelled" invisible="1"/>
                         <div class="oe_title">
                             <h1>
-                                <field name="name" placeholder="Document Name"/>
+                                <field name="name" placeholder="Document Name" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                             </h1>
                         </div>
                         
                         <group>
                             <group>
-                                <field name="grant_id"/>
+                                <field name="grant_id" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                                <field name="subgrant_id" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                                 <field name="amendment_id" invisible="amendment_id == False"/>
                                 <field name="compliance_id" invisible="compliance_id == False"/>
                                 <field name="reporting_schedule_id" invisible="reporting_schedule_id == False"/>
-                                <field name="document_type"/>
-                                <field name="category"/>
-                                <field name="version"/>
+                                <field name="document_type" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                                <field name="category" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                                <field name="version" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                             </group>
                             <group>
-                                <field name="document_number"/>
-                                <field name="document_date"/>
-                                <field name="expiry_date"/>
-                                <field name="effective_date"/>
-                                <field name="confidentiality"/>
+                                <field name="document_number" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                                <field name="document_date" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                                <field name="expiry_date" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                                <field name="effective_date" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                                <field name="confidentiality" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                             </group>
                         </group>
                         
                         <group>
                             <group>
-                                <field name="is_public"/>
-                                <field name="is_confidential"/>
-                                <field name="mandatory"/>
+                                <field name="is_public" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                                <field name="is_confidential" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                                <field name="mandatory" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                             </group>
                             <group>
-                                <field name="document_id"/>
+                                <field name="document_id" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                             </group>
                         </group>
                         
                         <group>
-                            <field name="attachment" filename="file_name"/>
-                            <field name="file_name"/>
+                            <field name="attachment" filename="file_name" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                            <field name="file_name" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                             <field name="file_size" readonly="1"/>
                             <field name="mimetype" readonly="1" invisible="mimetype == False"/>
                         </group>
                         
                         <group>
-                            <field name="description" placeholder="Document description..."/>
+                            <field name="description" placeholder="Document description..." readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                         </group>
                     </sheet>
                     
                     <notebook>
                             <page string="Approval">
                                 <group>
-                                    <field name="requires_approval"/>
+                                    <field name="requires_approval" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                                     <field name="approved" readonly="1"/>
                                     <field name="approved_by" readonly="1"/>
                                     <field name="approval_date" readonly="1"/>
@@ -93,8 +98,8 @@
                             
                             <page string="Submission">
                                 <group>
-                                    <field name="submitted_to_donor"/>
-                                    <field name="donor_submission_date"/>
+                                    <field name="submitted_to_donor" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
+                                    <field name="donor_submission_date" readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                                 </group>
                             </page>
                             
@@ -106,7 +111,7 @@
                             </page>
                             
                             <page string="Notes">
-                                <field name="notes" placeholder="Additional notes..."/>
+                                <field name="notes" placeholder="Additional notes..." readonly="state in ['approved', 'active', 'archived', 'expired', 'cancelled']"/>
                             </page>
                         </notebook>
                     
@@ -117,13 +122,13 @@
         
         <!-- Document Action -->
         <record id="action_document" model="ir.actions.act_window">
-            <field name="name">Grant Documents</field>
+            <field name="name">Grant and Subgrant Documents</field>
             <field name="res_model">ngo.grant.document</field>
             <field name="view_mode">list,kanban,form,pivot,graph</field>
         </record>
         
         <!-- Document Menu -->
-        <menuitem id="menu_document" name="Documents" parent="menu_grant_documents" action="action_document" sequence="10" groups="group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
+        <menuitem id="menu_document" name="Documents" parent="menu_grant_documents" action="action_document" sequence="10" groups="base.group_system,group_ngo_director,group_ngo_manager,group_ngo_grant_officer,group_ngo_approver,group_ngo_grant_read"/>
         
     </data>
 </odoo>
